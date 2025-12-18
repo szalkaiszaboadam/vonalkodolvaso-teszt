@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vonalkód Olvasó + Lámpa</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 10px; }
+
+        /* A kamera doboza */
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Az eredmény doboza */
+        #result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+        }
+
+        #scanned-result {
+            font-weight: bold;
+            color: #2a9d8f;
+        }
+
+        /* Zseblámpa gomb stílusa */
+        #torch-btn {
+            margin-top: 15px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #e76f51;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            display: none; /* Alapból elrejtjük, amíg a kamera el nem indul */
+        }
+        #torch-btn:active { transform: scale(0.98); }
+        #torch-btn.active { background-color: #f4a261; border: 2px solid #e76f51; }
+    </style>
+</head>
+<body>
+
+    <h1>Vonalkód Szkenner</h1>
+
+    <div id="reader"></div>
+
+    <button id="torch-btn" onclick="toggleTorch()">🔦 Lámpa Be/Ki</button>
+
+    <div id="result-box">
+        Beolvasott kód: <br>
+        <span id="scanned-result">- még nincs -</span>
+    </div>
+
+    <script>
+        let html5QrCode;
+        let isTorchOn = false;
+
+        function startScanner() {
+            // Létrehozzuk a scanner példányt
+            html5QrCode = new Html5Qrcode("reader");
+
+            const config = {
+                fps: 10,  // Képkocka / másodperc (ne legyen túl magas a teljesítmény miatt)
+                qrbox: { width: 250, height: 250 } // A szkennelési négyzet mérete
+            };
+
+            // Indítás a hátsó kamerával ('environment')
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess
+            ).then(() => {
+                // Ha sikeresen elindult a kamera, megjelenítjük a lámpa gombot
+                document.getElementById("torch-btn").style.display = "inline-block";
+                console.log("Kamera elindult.");
+            }).catch(err => {
+                console.error("Hiba a kamera indításakor:", err);
+                alert("Nem sikerült elindítani a kamerát. Ellenőrizd a jogosultságokat és a HTTPS kapcsolatot!");
+            });
+        }
+
+        // Ez fut le, ha sikeres a beolvasás
+        function onScanSuccess(decodedText, decodedResult) {
+            // Kiírjuk az eredményt a képernyőre
+            document.getElementById('scanned-result').innerText = decodedText;
+
+            // Opcionális: pittyeghet, vagy leállíthatjuk a kamerát beolvasás után
+            // html5QrCode.stop();
+        }
+
+        // Zseblámpa kapcsolgatása
+        function toggleTorch() {
+            if (!html5QrCode) return;
+
+            // Ellenőrizzük az aktuális állapotot és fordítjuk
+            isTorchOn = !isTorchOn;
+
+            // A constraint beállítása a vakuhoz
+            const constraints = {
+                advanced: [{ torch: isTorchOn }]
+            };
+
+            html5QrCode.applyVideoConstraints(constraints)
+                .then(() => {
+                    console.log("Lámpa állapot: " + isTorchOn);
+                    const btn = document.getElementById("torch-btn");
+                    btn.innerText = isTorchOn ? "🔦 Lámpa KI" : "🔦 Lámpa BE";
+                })
+                .catch(err => {
+                    console.error("A lámpa kapcsolása nem sikerült: ", err);
+                    alert("A te készüléked vagy böngésződ nem támogatja a lámpa vezérlését ezen a módon.");
+                    isTorchOn = !isTorchOn; // Visszaállítjuk a változót, ha hiba volt
+                });
+        }
+
+        // Az oldal betöltésekor indítjuk
+        window.onload = startScanner;
+    </script>
+</body>
+</html>
