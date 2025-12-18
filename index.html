@@ -3,21 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profi Vonalkód Olvasó</title>
+    <title>Fotós Vonalkód Olvasó</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
         body { font-family: sans-serif; text-align: center; background: #eee; margin: 0; padding: 20px; }
         
-        #reader {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            border-radius: 8px;
+        h2 { color: #333; margin-bottom: 30px; }
+
+        /* A nagy gomb stílusa */
+        .upload-btn-wrapper {
+            position: relative;
             overflow: hidden;
-            background: #000;
+            display: inline-block;
+            margin-bottom: 20px;
         }
 
+        .btn {
+            border: 2px solid gray;
+            color: white;
+            background-color: #2a9d8f;
+            padding: 20px 40px;
+            border-radius: 50px; /* Lekerekített gomb */
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        /* Az igazi input mezőt elrejtjük a gomb mögé */
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Eredmény doboz */
         #result-box {
             margin-top: 20px;
             padding: 20px;
@@ -25,151 +55,63 @@
             border-radius: 8px;
             font-size: 1.2rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 50px;
         }
         
-        #scanned-result { font-weight: bold; color: #2a9d8f; font-size: 1.5rem; display: block; margin-top: 10px;}
+        #scanned-result { font-weight: bold; color: #e76f51; font-size: 1.5rem; display: block; margin-top: 10px;}
+        
+        #status-msg { color: #666; font-size: 0.9rem; font-style: italic; }
 
-        .controls { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            color: white;
-            width: 80%;
-            max-width: 300px;
-        }
-        
-        #torch-btn { background-color: #e76f51; display: none; }
-        #torch-btn.active { background-color: #f4a261; border: 2px solid #e76f51; }
-
-        #zoom-container { 
-            display: none; 
-            width: 80%; 
-            max-width: 300px; 
-            margin-top: 10px;
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        input[type=range] { width: 100%; }
-        label { font-size: 14px; font-weight: bold; color: #555; }
+        /* Ez a div kell a html5-qrcode működéséhez, de nem kell látszódnia */
+        #reader { display: none; }
     </style>
 </head>
 <body>
 
-    <h2>Profi Vonalkód Olvasó</h2>
+    <h2>📷 Fotós Szkenner</h2>
     
-    <div id="reader"></div>
+    <p style="margin-bottom: 20px;">Készíts egy fotót a vonalkódról!</p>
 
-    <div class="controls">
-        <button id="torch-btn" onclick="toggleTorch()">🔦 Lámpa</button>
-        
-        <div id="zoom-container">
-            <label for="zoom-slider">Nagyítás (Zoom):</label><br>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1" oninput="applyZoom(this.value)">
-        </div>
+    <div class="upload-btn-wrapper">
+        <button class="btn">📸 FOTÓZÁS INDÍTÁSA</button>
+        <input type="file" id="qr-input-file" accept="image/*" capture="environment" onchange="scanFromFile(this)">
     </div>
 
     <div id="result-box">
-        Beolvasott kód:<br>
-        <span id="scanned-result">-</span>
+        <div id="status-msg">Az eredmény itt jelenik meg...</div>
+        <span id="scanned-result"></span>
     </div>
 
+    <div id="reader"></div>
+
     <script>
-        let html5QrCode;
-        let isTorchOn = false;
-        let videoTrack; 
+        const html5QrCode = new Html5Qrcode("reader");
 
-        function startScanner() {
-            html5QrCode = new Html5Qrcode("reader");
-
-            // 1. lépés: Kifejezetten a hátsó kamerát kérjük
-            const cameraIdOrConfig = { facingMode: "environment" };
-
-            // 2. lépés: A beállításoknál is megerősítjük ezt
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
-                videoConstraints: {
-                    facingMode: "environment", // ITT IS megadjuk, hogy biztosan a hátsó legyen!
-                    width: { min: 640, ideal: 1920, max: 3840 },
-                    height: { min: 480, ideal: 1080, max: 2160 },
-                    focusMode: "continuous"
-                }
-            };
-            
-            html5QrCode.start(
-                cameraIdOrConfig, 
-                config,
-                onScanSuccess
-            ).then(() => {
-                setupCameraControls();
-            }).catch(err => {
-                console.error("Hiba:", err);
-                alert("Kamera hiba: " + err);
-            });
-        }
-
-        function setupCameraControls() {
-            setTimeout(() => {
-                const videoElement = document.querySelector("#reader video");
-                if (videoElement && videoElement.srcObject) {
-                    const stream = videoElement.srcObject;
-                    videoTrack = stream.getVideoTracks()[0];
-                    
-                    const capabilities = videoTrack.getCapabilities();
-                    const settings = videoTrack.getSettings();
-
-                    if (capabilities.torch) {
-                        document.getElementById("torch-btn").style.display = "block";
-                    }
-
-                    if (capabilities.zoom) {
-                        const zoomContainer = document.getElementById("zoom-container");
-                        const zoomSlider = document.getElementById("zoom-slider");
-                        
-                        zoomContainer.style.display = "block";
-                        zoomSlider.min = capabilities.zoom.min;
-                        zoomSlider.max = capabilities.zoom.max;
-                        zoomSlider.step = capabilities.zoom.step;
-                        zoomSlider.value = settings.zoom || 1;
-                    }
-                }
-            }, 500); 
-        }
-
-        function applyZoom(value) {
-            if (videoTrack) {
-                videoTrack.applyConstraints({
-                    advanced: [{ zoom: parseFloat(value) }]
-                }).catch(e => console.log("Zoom hiba:", e));
+        function scanFromFile(inputElement) {
+            if (inputElement.files.length === 0) {
+                return;
             }
-        }
 
-        function toggleTorch() {
-            if (!videoTrack) return;
-            isTorchOn = !isTorchOn;
-            videoTrack.applyConstraints({
-                advanced: [{ torch: isTorchOn }]
-            }).then(() => {
-                const btn = document.getElementById("torch-btn");
-                btn.innerText = isTorchOn ? "🔦 Lámpa KI" : "🔦 Lámpa BE";
-                btn.classList.toggle("active");
-            }).catch(e => {
-                console.log(e);
-                isTorchOn = !isTorchOn; 
-            });
-        }
+            const imageFile = inputElement.files[0];
+            
+            // Kiírjuk, hogy dolgozik a gép
+            document.getElementById("status-msg").innerText = "Feldolgozás folyamatban...";
+            document.getElementById("scanned-result").innerText = "";
 
-        function onScanSuccess(decodedText) {
-            document.getElementById('scanned-result').innerText = decodedText;
+            // Beolvassuk a képet
+            html5QrCode.scanFile(imageFile, true)
+                .then(decodedText => {
+                    // SIKER!
+                    document.getElementById("status-msg").innerText = "Sikeres beolvasás:";
+                    document.getElementById("scanned-result").innerText = decodedText;
+                })
+                .catch(err => {
+                    // HIBA (nem talált kódot)
+                    console.log(err);
+                    document.getElementById("status-msg").innerText = "Nem találtam vonalkódot a képen. Próbáld újra élesebben!";
+                    document.getElementById("scanned-result").innerText = "";
+                });
         }
-
-        window.onload = startScanner;
     </script>
 </body>
 </html>
