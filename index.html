@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stabil Leltár Szkenner</title>
+    <title>Fagyásmentes Leltár</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
@@ -11,11 +11,11 @@
         
         h2 { color: #333; margin: 5px 0 10px 0; font-size: 1.2rem; }
 
-        /* --- 1. KISEBB KAMERA NÉZET --- */
+        /* KAMERA */
         #reader {
             width: 100%;
             max-width: 500px;
-            height: 250px; /* Fix magasság - így kisebb a nézet! */
+            height: 250px;
             margin: 0 auto 10px auto;
             border-radius: 12px;
             overflow: hidden;
@@ -23,15 +23,9 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             position: relative;
         }
-        
-        /* Ez fontos, hogy a videó kitöltse a kisebb dobozt */
-        #reader video {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-        }
+        #reader video { object-fit: cover; width: 100%; height: 100%; }
 
-        /* --- VEZÉRLŐK --- */
+        /* VEZÉRLŐK */
         .controls { 
             background: white; padding: 10px; border-radius: 10px; 
             max-width: 500px; margin: 0 auto 15px auto; 
@@ -53,7 +47,7 @@
         #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
         input[type=range] { width: 100%; }
 
-        /* Tömeges mód kapcsoló */
+        /* Tömeges mód */
         .bulk-toggle-container {
             display: flex; align-items: center; justify-content: center;
             padding: 8px; background: #eee; border-radius: 8px; margin-bottom: 5px;
@@ -61,34 +55,38 @@
         .bulk-toggle-container input { margin-right: 10px; transform: scale(1.3); }
         .bulk-active { background-color: #ffe8d6; border: 1px solid #e76f51; color: #e76f51; }
 
-        /* --- SAJÁT MODAL ABLAK (Hogy ne fagyjon le) --- */
-        #custom-modal {
+        /* --- UNIVERZÁLIS MODAL (Ablak) --- */
+        #overlay {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 9999;
             align-items: center; justify-content: center;
         }
-        .modal-content {
-            background: white; padding: 20px; border-radius: 10px; width: 80%; max-width: 300px; text-align: center;
+        .modal-box {
+            background: white; padding: 20px; border-radius: 10px; width: 85%; max-width: 320px; text-align: center;
         }
-        .modal-content input { font-size: 20px; padding: 10px; width: 80px; text-align: center; margin: 10px 0; }
-        .modal-btns { display: flex; gap: 10px; justify-content: center; }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+        .modal-btns button { flex: 1; }
 
-        /* --- TÁBLÁZAT --- */
+        /* Speciális input a mennyiséghez */
+        #modal-qty-input { font-size: 20px; padding: 10px; width: 80px; text-align: center; margin: 10px 0; display: none; border: 2px solid #2a9d8f; border-radius: 5px; }
+
+        /* TÁBLÁZAT */
         .table-container { width: 100%; max-width: 600px; margin: 0 auto; overflow-x: auto; background: white; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
         .highlight { background-color: #d4edda !important; }
         .qty-col { font-weight: bold; text-align: center; width: 40px; }
-        .btn-mini { padding: 4px 8px; margin-left: 2px; font-size: 12px; width: auto; }
+        .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
         .btn-minus { background-color: #6c757d; }
         .btn-delete { background-color: #d62828; }
     </style>
 </head>
 <body>
 
-    <h2>📦 Stabil Leltár</h2>
+    <h2>📦 Fagyásmentes Leltár</h2>
     
     <div id="reader"></div>
 
@@ -105,12 +103,12 @@
 
         <div class="bulk-toggle-container" id="bulk-box">
             <input type="checkbox" id="bulk-mode" onchange="toggleBulkUI()">
-            <label for="bulk-mode">Tömeges mód (Mennyiség)</label>
+            <label for="bulk-mode">Tömeges mód (Mennyiség kérése)</label>
         </div>
 
         <div class="btn-group">
             <button id="torch-btn" onclick="toggleTorch()">🔦</button>
-            <button id="clear-btn" onclick="clearData()">🗑️ Törlés</button>
+            <button id="clear-btn" onclick="askClearAll()">🗑️ Törlés</button>
             <button id="export-btn" onclick="exportToCSV()">💾 Excel</button>
         </div>
     </div>
@@ -124,14 +122,13 @@
         </table>
     </div>
 
-    <div id="custom-modal">
-        <div class="modal-content">
-            <h3>Hány darab?</h3>
-            <div id="modal-code-display" style="font-weight:bold; color:#2a9d8f; margin-bottom:10px;"></div>
-            <input type="number" id="modal-qty" value="1" min="1">
+    <div id="overlay">
+        <div class="modal-box">
+            <div id="modal-text" class="modal-title">Üzenet</div>
+            <input type="number" id="modal-qty-input" value="1" min="1">
             <div class="modal-btns">
                 <button onclick="closeModal(false)" style="background:#666;">Mégse</button>
-                <button onclick="closeModal(true)" style="background:#2a9d8f;">Mentés</button>
+                <button id="modal-confirm-btn" onclick="closeModal(true)" style="background:#2a9d8f;">OK</button>
             </div>
         </div>
     </div>
@@ -143,9 +140,12 @@
         let inventoryData = {}; 
         let audioCtx;
         let isScanningPaused = false;
-        let currentScannedCode = ""; // Ideiglenes tároló a modalhoz
+        
+        // Modal állapotok
+        let currentAction = null; // 'bulk-add', 'delete-one', 'clear-all'
+        let tempCode = "";
 
-        // Hang lejátszás
+        // HANG
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -157,35 +157,30 @@
         }
         document.body.addEventListener('click', () => { if (!audioCtx) playBeep(); }, { once: true });
 
-        // --- KAMERA INDÍTÁS ---
+        // KAMERA
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
-            
-            // Itt állítjuk be, hogy a "belső" kép széles legyen, így kitölti a 250px magas dobozt
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 150 }, // Kisebb szkennelési keret
-                aspectRatio: 1.77, // Szélesvásznú képarány kérése
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1.77,
                 videoConstraints: {
                     facingMode: "environment",
                     width: { min: 640, ideal: 1280, max: 1920 },
                     focusMode: "continuous"
                 }
             };
-            
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => { setupCameraControls(); })
             .catch(err => { console.log(err); });
         }
 
-        // --- BEOLVASÁS ---
         function onScanSuccess(decodedText) {
-            if (isScanningPaused) return; // Ha szünet van, ne csináljon semmit
+            if (isScanningPaused) return;
 
             const code = decodedText.trim();
             if(code === "") return;
 
-            // Szüneteltetjük a logikát (de a kamera képe mehet tovább, vagy megállhat)
             isScanningPaused = true; 
             if (navigator.vibrate) navigator.vibrate(200); 
             playBeep();
@@ -193,41 +188,65 @@
             const isBulk = document.getElementById("bulk-mode").checked;
 
             if (isBulk) {
-                // Megnyitjuk a saját ablakunkat (NEM a prompt-ot)
-                openModal(code);
+                // Tömeges mód -> Modal megnyitása
+                openModal('bulk-add', code);
             } else {
-                // Sima hozzáadás
+                // Sima mód -> Azonnal hozzáad
                 addQuantity(code, 1);
-                
-                // 2. KÉRÉS: HOSSZABB VÁRAKOZÁS (3000ms = 3 másodperc)
-                setTimeout(() => { 
-                    isScanningPaused = false; 
-                }, 3000);
+                setTimeout(() => { isScanningPaused = false; }, 3000); // 3 mp szünet
             }
         }
 
-        // --- SAJÁT MODAL KEZELÉSE ---
-        function openModal(code) {
-            currentScannedCode = code;
-            document.getElementById("modal-code-display").innerText = code;
-            document.getElementById("modal-qty").value = 1;
-            document.getElementById("custom-modal").style.display = "flex";
-            document.getElementById("modal-qty").focus();
+        // --- MODAL KEZELÉS (EZ HELYETTESÍTI A CONFIRM-et) ---
+        function openModal(action, code = "") {
+            const overlay = document.getElementById("overlay");
+            const title = document.getElementById("modal-text");
+            const input = document.getElementById("modal-qty-input");
+            const okBtn = document.getElementById("modal-confirm-btn");
+            
+            currentAction = action;
+            tempCode = code;
+            
+            overlay.style.display = "flex";
+            input.style.display = "none"; // Alapból rejtve
+            okBtn.style.background = "#2a9d8f"; // Alapból zöld
+
+            if (action === 'bulk-add') {
+                title.innerHTML = `Kód: <b>${code}</b><br>Mennyiség?`;
+                input.style.display = "block";
+                input.value = 1;
+                input.focus();
+            } 
+            else if (action === 'delete-one') {
+                title.innerHTML = `Biztosan törlöd ezt?<br><b>${code}</b>`;
+                okBtn.style.background = "#d62828"; // Piros
+            }
+            else if (action === 'clear-all') {
+                title.innerHTML = `Minden adat törlése?<br>Ez nem vonható vissza!`;
+                okBtn.style.background = "#d62828"; // Piros
+            }
         }
 
-        function closeModal(save) {
-            const modal = document.getElementById("custom-modal");
-            const qtyInput = document.getElementById("modal-qty");
+        function closeModal(isConfirmed) {
+            const overlay = document.getElementById("overlay");
+            const input = document.getElementById("modal-qty-input");
             
-            if (save) {
-                const qty = parseInt(qtyInput.value);
-                if (!isNaN(qty) && qty > 0) {
-                    addQuantity(currentScannedCode, qty);
+            overlay.style.display = "none";
+
+            if (isConfirmed) {
+                if (currentAction === 'bulk-add') {
+                    const qty = parseInt(input.value);
+                    if (!isNaN(qty) && qty > 0) addQuantity(tempCode, qty);
+                }
+                else if (currentAction === 'delete-one') {
+                    performDeleteRow(tempCode);
+                }
+                else if (currentAction === 'clear-all') {
+                    performClearAll();
                 }
             }
-            
-            modal.style.display = "none";
-            // Késleltetve engedjük újra a szkennelést
+
+            // Ha nem tömeges törlés volt, újraindítjuk a szkennelést rövid idő múlva
             setTimeout(() => { isScanningPaused = false; }, 1000);
         }
 
@@ -241,13 +260,36 @@
         function modifyQty(code, change) {
             if (inventoryData[code]) {
                 inventoryData[code] += change;
-                if (inventoryData[code] <= 0) delete inventoryData[code];
-                updateTable(null);
+                if (inventoryData[code] <= 0) {
+                    // Ha 0 lesz, kérdezzen rá a törlésre
+                    askDeleteRow(code);
+                } else {
+                    updateTable(null);
+                }
             }
         }
 
-        function deleteRow(code) {
-            if (confirm("Törlöd?")) { delete inventoryData[code]; updateTable(null); }
+        // Törlés kérése (Modal nyitása)
+        function askDeleteRow(code) {
+            isScanningPaused = true; // Megállítjuk a szkennelést, hogy ne zavarjon
+            openModal('delete-one', code);
+        }
+        
+        // Tényleges törlés
+        function performDeleteRow(code) {
+            delete inventoryData[code];
+            updateTable(null);
+        }
+
+        // Összes törlés kérése
+        function askClearAll() {
+            isScanningPaused = true;
+            openModal('clear-all');
+        }
+
+        function performClearAll() {
+            inventoryData = {};
+            updateTable();
         }
 
         function updateTable(highlightCode) {
@@ -264,7 +306,7 @@
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
                         <button class="btn-mini btn-minus" onclick="modifyQty('${code}', -1)">➖</button>
-                        <button class="btn-mini btn-delete" onclick="deleteRow('${code}')">❌</button>
+                        <button class="btn-mini btn-delete" onclick="askDeleteRow('${code}')">❌</button>
                     </td>`;
                 tbody.appendChild(row); 
             });
@@ -275,42 +317,28 @@
             const input = document.getElementById("manual-input");
             const code = input.value.trim();
             if (code) {
-                isScanningPaused = true; // Kézinél is legyen pici szünet
+                isScanningPaused = true; 
                 playBeep();
-                
-                if (document.getElementById("bulk-mode").checked) {
-                    openModal(code);
-                } else {
-                    addQuantity(code, 1);
-                    setTimeout(() => { isScanningPaused = false; }, 1000);
-                }
+                if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
+                else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
                 input.value = "";
             }
         }
 
         function checkEnter(e) { if (e.key === "Enter") addManualCode(); }
-
-        function toggleBulkUI() {
-            const box = document.getElementById("bulk-box");
+        function toggleBulkUI() { 
+            const box = document.getElementById("bulk-box"); 
             document.getElementById("bulk-mode").checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
         }
-
-        function clearData() {
-            if (confirm("Minden adat törlődik!")) { inventoryData = {}; updateTable(); }
-        }
-
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,Vonalkod,Darabszam\n";
             Object.keys(inventoryData).forEach(code => csvContent += `${code},${inventoryData[code]}\n`);
             const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "leltar.csv");
-            document.body.appendChild(link);
-            link.click(); document.body.removeChild(link);
+            const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "leltar.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- KAMERA VEZÉRLÉS ---
+        // --- KAMERA EXTRÁK ---
         function setupCameraControls() {
             setTimeout(() => {
                 const videoElement = document.querySelector("#reader video");
@@ -319,25 +347,17 @@
                     videoTrack = stream.getVideoTracks()[0];
                     const caps = videoTrack.getCapabilities();
                     const settings = videoTrack.getSettings();
-
                     if (caps.zoom) {
-                        const zc = document.getElementById("zoom-container");
+                        document.getElementById("zoom-container").style.display = "block";
                         const zs = document.getElementById("zoom-slider");
-                        zc.style.display = "block";
-                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step;
-                        zs.value = settings.zoom || 1;
+                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step; zs.value = settings.zoom || 1;
                     }
                     if (caps.torch) document.getElementById("torch-btn").style.display = "inline-block";
                 }
             }, 500);
         }
-
         function applyZoom(val) { if (videoTrack) videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] }).catch(e=>{}); }
-        function toggleTorch() { 
-            if (!videoTrack) return; 
-            isTorchOn = !isTorchOn; 
-            videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(e=>{}); 
-        }
+        function toggleTorch() { if (videoTrack) { isTorchOn = !isTorchOn; videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(e=>{}); } }
 
         window.onload = startScanner;
     </script>
