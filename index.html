@@ -2,140 +2,114 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super-Pro Leltár</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stabil Leltár Szkenner</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 50px; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f4; margin: 0; padding: 10px; }
         
-        h2 { color: #333; margin-bottom: 10px; margin-top: 5px; }
+        h2 { color: #333; margin: 5px 0 10px 0; font-size: 1.2rem; }
 
-        /* --- KAMERA --- */
+        /* --- 1. KISEBB KAMERA NÉZET --- */
         #reader {
             width: 100%;
             max-width: 500px;
+            height: 250px; /* Fix magasság - így kisebb a nézet! */
             margin: 0 auto 10px auto;
             border-radius: 12px;
             overflow: hidden;
             background: #000;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        /* Ez fontos, hogy a videó kitöltse a kisebb dobozt */
+        #reader video {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
         }
 
-        /* --- VEZÉRLŐ PULT --- */
+        /* --- VEZÉRLŐK --- */
         .controls { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 10px; 
-            max-width: 500px; 
-            margin: 0 auto 20px auto; 
+            background: white; padding: 10px; border-radius: 10px; 
+            max-width: 500px; margin: 0 auto 15px auto; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* Kézi bevitel doboz */
-        .manual-input-group {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-        }
-        .manual-input-group input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .manual-input-group button {
-            background-color: #2a9d8f;
-            width: auto;
-        }
-
-        /* Tömeges kapcsoló */
-        .bulk-toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #eee;
-            border-radius: 8px;
-        }
-        .bulk-toggle-container input { margin-right: 10px; transform: scale(1.5); }
-        .bulk-label { font-weight: bold; color: #555; }
-        .bulk-active { background-color: #ffe8d6; border: 1px solid #e76f51; color: #e76f51; }
-
-        /* Zoom */
-        #zoom-container { display: none; width: 95%; margin: 0 auto 15px auto; }
-        input[type=range] { width: 100%; cursor: pointer; }
-        label { font-size: 14px; font-weight: bold; color: #555; }
-
-        /* Alsó gombok */
-        .btn-group { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .manual-input-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .manual-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
         
-        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; width: 100%; }
+        button { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
+        .btn-add { background-color: #2a9d8f; }
+        
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         #clear-btn { background-color: #e76f51; flex: 1; }
         #export-btn { background-color: #264653; flex: 1; }
         #torch-btn { background-color: #e9c46a; color: #333; display: none; flex: 1; }
 
-        /* --- TÁBLÁZAT --- */
-        .table-container {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            overflow-x: auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
-        th { background-color: #2a9d8f; color: white; text-transform: uppercase; font-size: 0.85rem; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        
-        .highlight { background-color: #d4edda !important; transition: background-color 1s ease; }
-        
-        .code-col { font-family: monospace; font-size: 1.1rem; color: #333; }
-        .qty-col { font-weight: bold; color: #264653; font-size: 1.2rem; text-align: center; width: 50px; }
-        
-        /* Akció gombok a táblázatban */
-        .action-col { text-align: right; white-space: nowrap; width: 80px; }
-        .btn-mini { 
-            padding: 5px 10px; 
-            margin-left: 3px; 
-            font-size: 14px; 
-            width: auto; 
-            display: inline-block; 
-        }
-        .btn-minus { background-color: #6c757d; } /* Szürke */
-        .btn-delete { background-color: #d62828; } /* Piros */
+        /* Zoom */
+        #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
+        input[type=range] { width: 100%; }
 
+        /* Tömeges mód kapcsoló */
+        .bulk-toggle-container {
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px; background: #eee; border-radius: 8px; margin-bottom: 5px;
+        }
+        .bulk-toggle-container input { margin-right: 10px; transform: scale(1.3); }
+        .bulk-active { background-color: #ffe8d6; border: 1px solid #e76f51; color: #e76f51; }
+
+        /* --- SAJÁT MODAL ABLAK (Hogy ne fagyjon le) --- */
+        #custom-modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 10px; width: 80%; max-width: 300px; text-align: center;
+        }
+        .modal-content input { font-size: 20px; padding: 10px; width: 80px; text-align: center; margin: 10px 0; }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; }
+
+        /* --- TÁBLÁZAT --- */
+        .table-container { width: 100%; max-width: 600px; margin: 0 auto; overflow-x: auto; background: white; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
+        .highlight { background-color: #d4edda !important; }
+        .qty-col { font-weight: bold; text-align: center; width: 40px; }
+        .btn-mini { padding: 4px 8px; margin-left: 2px; font-size: 12px; width: auto; }
+        .btn-minus { background-color: #6c757d; }
+        .btn-delete { background-color: #d62828; }
     </style>
 </head>
 <body>
 
-    <h2>🚀 Super-Pro Leltár</h2>
+    <h2>📦 Stabil Leltár</h2>
     
     <div id="reader"></div>
 
     <div class="controls">
-        
         <div class="manual-input-group">
-            <input type="number" id="manual-input" placeholder="Kézi kód (pl. 599...)" onkeydown="checkEnter(event)">
-            <button onclick="addManualCode()">+ Hozzáad</button>
+            <input type="number" id="manual-input" placeholder="Kézi kód..." onkeydown="checkEnter(event)">
+            <button class="btn-add" onclick="addManualCode()">OK</button>
         </div>
 
         <div id="zoom-container">
-            <label for="zoom-slider">🔍 Nagyítás:</label>
+            <label>🔍 Zoom:</label>
             <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1" oninput="applyZoom(this.value)">
         </div>
 
         <div class="bulk-toggle-container" id="bulk-box">
             <input type="checkbox" id="bulk-mode" onchange="toggleBulkUI()">
-            <label for="bulk-mode" class="bulk-label">📦 Tömeges mód (Mennyiség kérése)</label>
+            <label for="bulk-mode">Tömeges mód (Mennyiség)</label>
         </div>
 
         <div class="btn-group">
-            <button id="torch-btn" onclick="toggleTorch()">🔦 Lámpa</button>
+            <button id="torch-btn" onclick="toggleTorch()">🔦</button>
             <button id="clear-btn" onclick="clearData()">🗑️ Törlés</button>
             <button id="export-btn" onclick="exportToCSV()">💾 Excel</button>
         </div>
@@ -144,14 +118,22 @@
     <div class="table-container">
         <table id="inventory-table">
             <thead>
-                <tr>
-                    <th>Kód</th>
-                    <th class="qty-col">Db</th>
-                    <th class="action-col">Javítás</th>
-                </tr>
+                <tr><th>Kód</th><th class="qty-col">Db</th><th>Művelet</th></tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
+    </div>
+
+    <div id="custom-modal">
+        <div class="modal-content">
+            <h3>Hány darab?</h3>
+            <div id="modal-code-display" style="font-weight:bold; color:#2a9d8f; margin-bottom:10px;"></div>
+            <input type="number" id="modal-qty" value="1" min="1">
+            <div class="modal-btns">
+                <button onclick="closeModal(false)" style="background:#666;">Mégse</button>
+                <button onclick="closeModal(true)" style="background:#2a9d8f;">Mentés</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -160,243 +142,201 @@
         let videoTrack; 
         let inventoryData = {}; 
         let audioCtx;
+        let isScanningPaused = false;
+        let currentScannedCode = ""; // Ideiglenes tároló a modalhoz
 
-        // --- HANG ---
+        // Hang lejátszás
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.type = 'square'; 
-            oscillator.frequency.value = 800; 
-            gainNode.gain.value = 0.1; 
-
-            oscillator.start();
-            setTimeout(() => { oscillator.stop(); }, 150); 
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
+            osc.start(); setTimeout(() => osc.stop(), 150); 
         }
-        
-        // Hang aktiválása első kattintásra (iPhone miatt)
-        document.body.addEventListener('click', () => {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }, { once: true });
-
+        document.body.addEventListener('click', () => { if (!audioCtx) playBeep(); }, { once: true });
 
         // --- KAMERA INDÍTÁS ---
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
-
+            
+            // Itt állítjuk be, hogy a "belső" kép széles legyen, így kitölti a 250px magas dobozt
             const config = { 
                 fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
+                qrbox: { width: 250, height: 150 }, // Kisebb szkennelési keret
+                aspectRatio: 1.77, // Szélesvásznú képarány kérése
                 videoConstraints: {
                     facingMode: "environment",
-                    width: { min: 640, ideal: 1280, max: 1920 }, 
-                    height: { min: 480, ideal: 720, max: 1080 },
+                    width: { min: 640, ideal: 1280, max: 1920 },
                     focusMode: "continuous"
                 }
             };
             
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => { setupCameraControls(); })
-            .catch(err => { alert("Kamera hiba: " + err); });
+            .catch(err => { console.log(err); });
         }
 
-        // --- BEOLVASÁS LOGIKA (IT TÖRTÉNT A VARÁZSLAT) ---
+        // --- BEOLVASÁS ---
         function onScanSuccess(decodedText) {
+            if (isScanningPaused) return; // Ha szünet van, ne csináljon semmit
+
             const code = decodedText.trim();
             if(code === "") return;
 
-            // Visszajelzések
+            // Szüneteltetjük a logikát (de a kamera képe mehet tovább, vagy megállhat)
+            isScanningPaused = true; 
             if (navigator.vibrate) navigator.vibrate(200); 
             playBeep();
 
-            // 4. TÖMEGES MÓD ELLENŐRZÉSE
             const isBulk = document.getElementById("bulk-mode").checked;
-            let qtyToAdd = 1;
 
             if (isBulk) {
-                // Kamera szünetel, amíg beírod a számot
-                html5QrCode.pause(); 
-                let inputQty = prompt(`"${code}" beolvasva.\nMennyi van ebből?`, "1");
+                // Megnyitjuk a saját ablakunkat (NEM a prompt-ot)
+                openModal(code);
+            } else {
+                // Sima hozzáadás
+                addQuantity(code, 1);
                 
-                if (inputQty === null) {
-                    // Ha a 'Mégse' gombra nyomsz
-                    html5QrCode.resume();
-                    return; 
-                }
-
-                qtyToAdd = parseInt(inputQty);
-                if (isNaN(qtyToAdd) || qtyToAdd <= 0) {
-                    alert("Hibás szám! Csak 1 darabot adok hozzá.");
-                    qtyToAdd = 1;
-                }
-                html5QrCode.resume();
+                // 2. KÉRÉS: HOSSZABB VÁRAKOZÁS (3000ms = 3 másodperc)
+                setTimeout(() => { 
+                    isScanningPaused = false; 
+                }, 3000);
             }
+        }
 
-            // Adatok mentése
-            addQuantity(code, qtyToAdd);
+        // --- SAJÁT MODAL KEZELÉSE ---
+        function openModal(code) {
+            currentScannedCode = code;
+            document.getElementById("modal-code-display").innerText = code;
+            document.getElementById("modal-qty").value = 1;
+            document.getElementById("custom-modal").style.display = "flex";
+            document.getElementById("modal-qty").focus();
+        }
+
+        function closeModal(save) {
+            const modal = document.getElementById("custom-modal");
+            const qtyInput = document.getElementById("modal-qty");
             
-            // Szünet, ha nem tömeges módban vagyunk (hogy ne pörögjön)
-            if (!isBulk) {
-                html5QrCode.pause();
-                setTimeout(() => { html5QrCode.resume(); }, 1000);
+            if (save) {
+                const qty = parseInt(qtyInput.value);
+                if (!isNaN(qty) && qty > 0) {
+                    addQuantity(currentScannedCode, qty);
+                }
             }
-        }
-
-        // --- 1. KÉZI HOZZÁADÁS ---
-        function addManualCode() {
-            const input = document.getElementById("manual-input");
-            const code = input.value.trim();
             
-            if (code) {
-                // Ugyanazt a logikát hívjuk meg, mintha a kamera látta volna
-                onScanSuccess(code); 
-                input.value = ""; // Mező törlése
-                input.focus();
-            } else {
-                alert("Írj be egy kódot!");
-            }
+            modal.style.display = "none";
+            // Késleltetve engedjük újra a szkennelést
+            setTimeout(() => { isScanningPaused = false; }, 1000);
         }
 
-        function checkEnter(event) {
-            if (event.key === "Enter") {
-                addManualCode();
-            }
-        }
-
-        // --- ADATKEZELÉS KÖZPONTI FÜGGVÉNYE ---
+        // --- ADATKEZELÉS ---
         function addQuantity(code, amount) {
-            if (inventoryData[code]) {
-                inventoryData[code] += amount;
-            } else {
-                inventoryData[code] = amount;
-            }
+            if (inventoryData[code]) inventoryData[code] += amount;
+            else inventoryData[code] = amount;
             updateTable(code);
         }
 
-        // --- 2. JAVÍTÁS (MÍNUSZOLÁS / TÖRLÉS) ---
         function modifyQty(code, change) {
             if (inventoryData[code]) {
                 inventoryData[code] += change;
-                if (inventoryData[code] <= 0) {
-                    delete inventoryData[code]; // Ha 0 vagy kevesebb, töröljük
-                }
-                updateTable(null); // Itt nem kell highlight
-            }
-        }
-
-        function deleteRow(code) {
-            if (confirm("Biztosan törlöd a(z) " + code + " sort?")) {
-                delete inventoryData[code];
+                if (inventoryData[code] <= 0) delete inventoryData[code];
                 updateTable(null);
             }
         }
 
-        // --- TÁBLÁZAT FRISSÍTÉS ---
+        function deleteRow(code) {
+            if (confirm("Törlöd?")) { delete inventoryData[code]; updateTable(null); }
+        }
+
         function updateTable(highlightCode) {
             const tbody = document.getElementById("table-body");
             tbody.innerHTML = ""; 
-            
-            // Fordított sorrend (legújabb felül)
             Object.keys(inventoryData).reverse().forEach(code => {
                 const qty = inventoryData[code];
                 const row = document.createElement("tr");
-                
                 if (code === highlightCode) {
                     row.classList.add("highlight");
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-
-                // Itt hozzuk létre a gombokat a táblázatban
                 row.innerHTML = `
-                    <td class="code-col">${code}</td>
-                    <td class="qty-col">${qty}</td>
-                    <td class="action-col">
+                    <td>${code}</td><td class="qty-col">${qty}</td>
+                    <td style="text-align:right; white-space:nowrap;">
                         <button class="btn-mini btn-minus" onclick="modifyQty('${code}', -1)">➖</button>
                         <button class="btn-mini btn-delete" onclick="deleteRow('${code}')">❌</button>
-                    </td>
-                `;
+                    </td>`;
                 tbody.appendChild(row); 
             });
         }
 
-        // --- UI Extrák ---
-        function toggleBulkUI() {
-            const checkbox = document.getElementById("bulk-mode");
-            const container = document.getElementById("bulk-box");
-            if (checkbox.checked) {
-                container.classList.add("bulk-active");
-            } else {
-                container.classList.remove("bulk-active");
+        // --- EGYÉB FUNKCIÓK ---
+        function addManualCode() {
+            const input = document.getElementById("manual-input");
+            const code = input.value.trim();
+            if (code) {
+                isScanningPaused = true; // Kézinél is legyen pici szünet
+                playBeep();
+                
+                if (document.getElementById("bulk-mode").checked) {
+                    openModal(code);
+                } else {
+                    addQuantity(code, 1);
+                    setTimeout(() => { isScanningPaused = false; }, 1000);
+                }
+                input.value = "";
             }
         }
 
+        function checkEnter(e) { if (e.key === "Enter") addManualCode(); }
+
+        function toggleBulkUI() {
+            const box = document.getElementById("bulk-box");
+            document.getElementById("bulk-mode").checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
+        }
+
         function clearData() {
-            if (confirm("Minden adat törlődik!")) {
-                inventoryData = {};
-                updateTable();
-            }
+            if (confirm("Minden adat törlődik!")) { inventoryData = {}; updateTable(); }
         }
 
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,Vonalkod,Darabszam\n";
-            Object.keys(inventoryData).forEach(code => {
-                csvContent += `${code},${inventoryData[code]}\n`;
-            });
+            Object.keys(inventoryData).forEach(code => csvContent += `${code},${inventoryData[code]}\n`);
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "leltar_pro.csv");
+            link.setAttribute("download", "leltar.csv");
             document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            link.click(); document.body.removeChild(link);
         }
 
-        // --- KAMERA EXTRÁK (ZOOM, VAKU) ---
+        // --- KAMERA VEZÉRLÉS ---
         function setupCameraControls() {
             setTimeout(() => {
                 const videoElement = document.querySelector("#reader video");
                 if (videoElement && videoElement.srcObject) {
                     const stream = videoElement.srcObject;
                     videoTrack = stream.getVideoTracks()[0];
-                    const capabilities = videoTrack.getCapabilities();
+                    const caps = videoTrack.getCapabilities();
                     const settings = videoTrack.getSettings();
 
-                    if (capabilities.zoom) {
-                        const zoomContainer = document.getElementById("zoom-container");
-                        const zoomSlider = document.getElementById("zoom-slider");
-                        zoomContainer.style.display = "block";
-                        zoomSlider.min = capabilities.zoom.min;
-                        zoomSlider.max = capabilities.zoom.max;
-                        zoomSlider.step = capabilities.zoom.step;
-                        zoomSlider.value = settings.zoom || 1;
+                    if (caps.zoom) {
+                        const zc = document.getElementById("zoom-container");
+                        const zs = document.getElementById("zoom-slider");
+                        zc.style.display = "block";
+                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step;
+                        zs.value = settings.zoom || 1;
                     }
-                    if (capabilities.torch) {
-                        document.getElementById("torch-btn").style.display = "inline-block";
-                    }
+                    if (caps.torch) document.getElementById("torch-btn").style.display = "inline-block";
                 }
             }, 500);
         }
 
-        function applyZoom(value) {
-            if (videoTrack) {
-                videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(value) }] })
-                .catch(e => console.log(e));
-            }
-        }
-
-        function toggleTorch() {
-            if (!videoTrack) return;
-            isTorchOn = !isTorchOn;
-            videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] })
-            .catch(e => console.log(e));
+        function applyZoom(val) { if (videoTrack) videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] }).catch(e=>{}); }
+        function toggleTorch() { 
+            if (!videoTrack) return; 
+            isTorchOn = !isTorchOn; 
+            videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(e=>{}); 
         }
 
         window.onload = startScanner;
