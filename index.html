@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fagyásmentes Leltár</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
@@ -77,8 +78,13 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
+        
         .highlight { background-color: #d4edda !important; }
+        
+        /* Oszlop formázások - JAVÍTOTT RÉSZ */
         .qty-col { font-weight: bold; text-align: center; width: 40px; }
+        .action-col { text-align: right; } /* Ez tolja jobbra a fejlécet */
+
         .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
         .btn-minus { background-color: #6c757d; }
         .btn-delete { background-color: #d62828; }
@@ -116,7 +122,11 @@
     <div class="table-container">
         <table id="inventory-table">
             <thead>
-                <tr><th>Kód</th><th class="qty-col">Db</th><th>Művelet</th></tr>
+                <tr>
+                    <th>Kód</th>
+                    <th class="qty-col">Db</th>
+                    <th class="action-col">Művelet</th> 
+                </tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
