@@ -166,6 +166,7 @@
         }
 
         function loadData() {
+            // Adatok betöltése
             const saved = localStorage.getItem("leltar_adatok");
             if (saved) {
                 try {
@@ -175,34 +176,63 @@
                     console.error("Hiba az adatok betöltésekor", e);
                 }
             }
+
+            // Tömeges mód állapotának betöltése
+            const savedBulk = localStorage.getItem("leltar_bulk_mode");
+            if (savedBulk === "true") {
+                document.getElementById("bulk-mode").checked = true;
+                toggleBulkUI(); // Színezés frissítése
+            }
         }
 
-        // --- HANGOK KEZELÉSE ---
+        // --- ÚJ, SZEBB HANGOK ---
         
-        // HANG 1: Hosszú sípolás (Vonalkódhoz)
+        // HANG 1: Kellemesebb "ding" (Vonalkódhoz)
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
-            osc.start(); setTimeout(() => osc.stop(), 150); 
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            // Szinusz hullám (lágyabb)
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(660, audioCtx.currentTime); // Induló frekvencia
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1); // Lecsengés
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
         }
 
-        // HANG 2: Rövid klikk (Gombokhoz)
+        // HANG 2: Rövid, lágy "pop" (Gombokhoz)
         function playClick() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.value = 1200; gain.gain.value = 0.1; 
-            osc.start(); setTimeout(() => osc.stop(), 50); 
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            // Szinusz hullám
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); // Gyors halkulás
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid
         }
 
-        // Első kattintásra inicializáljuk az AudioContextet (böngésző policy miatt)
-        document.body.addEventListener('click', () => { if (!audioCtx) playBeep(); }, { once: true });
+        // Első kattintásra inicializáljuk az AudioContextet
+        document.body.addEventListener('click', () => { if (!audioCtx) playClick(); }, { once: true });
 
 
         // --- KAMERA KEZELÉS ---
@@ -250,10 +280,9 @@
 
             isScanningPaused = true; 
             
-            // Rezgés
-            if (navigator.vibrate) navigator.vibrate(200); 
+            // Rezgés TÖRÖLVE (kérésre)
 
-            // Eredeti hang
+            // Szép hang
             playBeep();
 
             const isBulk = document.getElementById("bulk-mode").checked;
@@ -371,7 +400,7 @@
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 
-                // Művelet gombok playClick() hívással
+                // Gombok a "Szép" hanggal (playClick)
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
@@ -389,8 +418,8 @@
             const code = input.value.trim();
             if (code) {
                 isScanningPaused = true; 
-                if (navigator.vibrate) navigator.vibrate(200);
-                playBeep(); 
+                // Rezgés törölve
+                playBeep(); // Beolvasás hang
                 if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
                 else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
                 input.value = "";
@@ -398,9 +427,14 @@
         }
 
         function checkEnter(e) { if (e.key === "Enter") addManualCode(); }
+        
         function toggleBulkUI() { 
+            const chk = document.getElementById("bulk-mode");
             const box = document.getElementById("bulk-box"); 
-            document.getElementById("bulk-mode").checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
+            chk.checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
+            
+            // MENTÉS a localStorage-ba
+            localStorage.setItem("leltar_bulk_mode", chk.checked);
         }
 
         function exportToExcel() {
