@@ -41,11 +41,22 @@
         button { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
         .btn-add { background-color: #2a9d8f; }
         
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap;}
-        #clear-btn { background-color: #e76f51; flex: 1; }
-        #export-btn { background-color: #264653; flex: 1; }
-        #torch-btn { background-color: #e9c46a; color: #333; display: none; flex: 1; }
-        #cam-restart-btn { background-color: #457b9d; flex: 1; min-width: 80px; }
+        /* FŐ VEZÉRLŐ GOMBOK */
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; justify-content: space-between; }
+        
+        .btn-group button { 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 24px; 
+            padding: 12px 0;
+        }
+
+        #clear-btn { background-color: #e76f51; }
+        #export-btn { background-color: #264653; }
+        #torch-btn { background-color: #e9c46a; color: #333; display: none; }
+        #cam-restart-btn { background-color: #457b9d; }
 
         /* Zoom */
         #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
@@ -73,23 +84,39 @@
         .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
         .modal-btns button { flex: 1; }
 
-        /* Speciális input a mennyiséghez */
         #modal-qty-input { font-size: 20px; padding: 10px; width: 80px; text-align: center; margin: 10px 0; display: none; border: 2px solid #2a9d8f; border-radius: 5px; }
 
         /* TÁBLÁZAT */
         .table-container { width: 100%; max-width: 600px; margin: 0 auto; overflow-x: auto; background: white; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
         th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
         
         .highlight { background-color: #d4edda !important; }
         
         /* Oszlop formázások */
         .qty-col { font-weight: bold; text-align: center; width: 40px; }
-        .action-col { text-align: right; }
+        .action-col { text-align: right; white-space: nowrap; }
 
-        /* GOMBOK A TÁBLÁZATBAN */
-        .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
+        /* MŰVELETI GOMBOK (MODERN KEREK) */
+        .btn-mini { 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; /* Kerek gomb */
+            border: none;
+            color: white;
+            font-size: 14px;
+            margin-left: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn-mini:active { transform: scale(0.9); }
+
         .btn-minus { background-color: #6c757d; } /* Szürke */
         .btn-plus { background-color: #2a9d8f; }  /* Zöld */
         .btn-delete { background-color: #d62828; } /* Piros */
@@ -117,11 +144,11 @@
             <label for="bulk-mode">Tömeges mód (Mennyiség kérése)</label>
         </div>
 
-       <div class="btn-group">
-            <button id="cam-restart-btn" onclick="playTorchSound(); restartCamera()">📷</button>
+        <div class="btn-group">
+            <button id="cam-restart-btn" onclick="playCameraSound(); restartCamera()">📷</button>
             <button id="torch-btn" onclick="playTorchSound(); toggleTorch()">🔦</button>
-            <button id="clear-btn" onclick="playTorchSound(); askClearAll()">🗑️</button>
-            <button id="export-btn" onclick="playTorchSound(); exportToExcel()">💾</button>
+            <button id="clear-btn" onclick="playClick(); askClearAll()">🗑️</button>
+            <button id="export-btn" onclick="playClick(); exportToExcel()">💾</button>
         </div>
     </div>
 
@@ -143,8 +170,8 @@
             <div id="modal-text" class="modal-title">Üzenet</div>
             <input type="number" id="modal-qty-input" value="1" min="1">
             <div class="modal-btns">
-                <button onclick="closeModal(false)" style="background:#666;">Mégse</button>
-                <button id="modal-confirm-btn" onclick="closeModal(true)" style="background:#2a9d8f;">OK</button>
+                <button onclick="playClick(); closeModal(false)" style="background:#666;">Mégse</button>
+                <button id="modal-confirm-btn" onclick="playClick(); closeModal(true)" style="background:#2a9d8f;">OK</button>
             </div>
         </div>
     </div>
@@ -166,7 +193,6 @@
         }
 
         function loadData() {
-            // Adatok betöltése
             const saved = localStorage.getItem("leltar_adatok");
             if (saved) {
                 try {
@@ -177,11 +203,10 @@
                 }
             }
 
-            // Tömeges mód állapotának betöltése
             const savedBulk = localStorage.getItem("leltar_bulk_mode");
             if (savedBulk === "true") {
                 document.getElementById("bulk-mode").checked = true;
-                toggleBulkUI(); // Színezés frissítése
+                toggleBulkUI(); 
             }
         }
 
@@ -192,51 +217,59 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
-            osc.start(); setTimeout(() => osc.stop(), 150); 
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(660, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
         }
 
         function playClick() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.type = 'triangle'; // Kicsit élesebb hang
-            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid
+            osc.stop(audioCtx.currentTime + 0.05); 
         }
-        
+
+        function playCameraSound() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const bufferSize = audioCtx.sampleRate * 0.1; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1; 
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            noise.connect(gain); gain.connect(audioCtx.destination);
+            noise.start();
+        }
 
         function playTorchSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            // Szinusz hullám
-            osc.type = 'sine'; 
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); // Gyors halkulás
-
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid*/
+            osc.stop(audioCtx.currentTime + 0.05); 
         }
 
-        // Első kattintásra inicializáljuk az AudioContextet
         document.body.addEventListener('click', () => { if (!audioCtx) playClick(); }, { once: true });
-
 
         // --- KAMERA KEZELÉS ---
         function startScanner() {
@@ -282,10 +315,6 @@
             if(code === "") return;
 
             isScanningPaused = true; 
-            
-            // Rezgés TÖRÖLVE (kérésre)
-
-            // Szép hang
             playBeep();
 
             const isBulk = document.getElementById("bulk-mode").checked;
@@ -403,13 +432,13 @@
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 
-                // Gombok a "Szép" hanggal (playClick)
+                // MŰVELETI GOMBOK (ICONS)
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
                         <button class="btn-mini btn-minus" onclick="playClick(); modifyQty('${code}', -1)">➖</button>
                         <button class="btn-mini btn-plus" onclick="playClick(); modifyQty('${code}', 1)">➕</button>
-                        <button class="btn-mini btn-delete" onclick="playClick(); askDeleteRow('${code}')">❌</button>
+                        <button class="btn-mini btn-delete" onclick="playClick(); askDeleteRow('${code}')">🗑️</button>
                     </td>`;
                 tbody.appendChild(row); 
             });
@@ -421,7 +450,6 @@
             const code = input.value.trim();
             if (code) {
                 isScanningPaused = true; 
-                // Rezgés törölve
                 playBeep(); // Beolvasás hang
                 if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
                 else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
@@ -436,7 +464,6 @@
             const box = document.getElementById("bulk-box"); 
             chk.checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
             
-            // MENTÉS a localStorage-ba
             localStorage.setItem("leltar_bulk_mode", chk.checked);
         }
 
