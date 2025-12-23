@@ -41,10 +41,11 @@
         button { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
         .btn-add { background-color: #2a9d8f; }
         
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap;}
         #clear-btn { background-color: #e76f51; flex: 1; }
         #export-btn { background-color: #264653; flex: 1; }
         #torch-btn { background-color: #e9c46a; color: #333; display: none; flex: 1; }
+        #cam-restart-btn { background-color: #457b9d; flex: 1; min-width: 80px; }
 
         /* Zoom */
         #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
@@ -90,7 +91,7 @@
         /* GOMBOK A TÁBLÁZATBAN */
         .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
         .btn-minus { background-color: #6c757d; } /* Szürke */
-        .btn-plus { background-color: #2a9d8f; }  /* Zöld (ugyanaz mint a fejléc) */
+        .btn-plus { background-color: #2a9d8f; }  /* Zöld */
         .btn-delete { background-color: #d62828; } /* Piros */
     </style>
 </head>
@@ -117,6 +118,7 @@
         </div>
 
         <div class="btn-group">
+            <button id="cam-restart-btn" onclick="restartCamera()">📷 Kamera</button>
             <button id="torch-btn" onclick="toggleTorch()">🔦</button>
             <button id="clear-btn" onclick="askClearAll()">🗑️ Törlés</button>
             <button id="export-btn" onclick="exportToExcel()">💾 Excel</button>
@@ -158,6 +160,23 @@
         let currentAction = null; 
         let tempCode = "";
 
+        // --- ADATMENTÉS ÉS BETÖLTÉS (Local Storage) ---
+        function saveData() {
+            localStorage.setItem("leltar_adatok", JSON.stringify(inventoryData));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem("leltar_adatok");
+            if (saved) {
+                try {
+                    inventoryData = JSON.parse(saved);
+                    updateTable(null);
+                } catch (e) {
+                    console.error("Hiba az adatok betöltésekor", e);
+                }
+            }
+        }
+
         // HANG
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -172,6 +191,19 @@
 
         // KAMERA
         function startScanner() {
+            // Ha már fut, leállítjuk biztonságból
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    initCamera();
+                }).catch(() => {
+                    initCamera();
+                });
+            } else {
+                initCamera();
+            }
+        }
+
+        function initCamera() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { 
                 fps: 10, 
@@ -185,7 +217,15 @@
             };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => { setupCameraControls(); })
-            .catch(err => { console.log(err); });
+            .catch(err => { 
+                console.log("Kamera hiba: ", err);
+                alert("Nem sikerült elindítani a kamerát. Kérlek engedélyezd a hozzáférést, vagy nyomd meg a 'Kamera' gombot.");
+            });
+        }
+
+        // Kézi újraindítás gombhoz
+        function restartCamera() {
+            startScanner();
         }
 
         function onScanSuccess(decodedText) {
@@ -265,6 +305,7 @@
             if (inventoryData[code]) inventoryData[code] += amount;
             else inventoryData[code] = amount;
             updateTable(code);
+            saveData(); // Mentés minden változáskor
         }
 
         function modifyQty(code, change) {
@@ -274,6 +315,7 @@
                     askDeleteRow(code);
                 } else {
                     updateTable(null);
+                    saveData(); // Mentés minden változáskor
                 }
             }
         }
@@ -286,6 +328,7 @@
         function performDeleteRow(code) {
             delete inventoryData[code];
             updateTable(null);
+            saveData(); // Mentés törléskor is
         }
 
         function askClearAll() {
@@ -296,6 +339,7 @@
         function performClearAll() {
             inventoryData = {};
             updateTable();
+            saveData(); // Mentés ürítéskor is
         }
 
         function updateTable(highlightCode) {
@@ -308,7 +352,6 @@
                     row.classList.add("highlight");
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-                // ÚJ RÉSZ: Hozzáadva a ➕ gomb
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
@@ -375,7 +418,11 @@
         function applyZoom(val) { if (videoTrack) videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] }).catch(e=>{}); }
         function toggleTorch() { if (videoTrack) { isTorchOn = !isTorchOn; videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(e=>{}); } }
 
-        window.onload = startScanner;
+        // INDÍTÁS
+        window.onload = function() {
+            loadData(); // Adatok betöltése indításkor
+            startScanner(); // Kamera indítása
+        };
     </script>
 </body>
 </html>
