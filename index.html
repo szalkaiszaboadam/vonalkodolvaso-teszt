@@ -104,8 +104,9 @@
             height: 32px; 
             border-radius: 50%; /* Kerek gomb */
             border: none;
-            color: white;
-            font-size: 14px;
+            color: white; /* Ez a fontos a fehér ikonhoz */
+            font-size: 20px; /* Nagyobb méret a sima +/- jeleknek */
+            font-weight: bold; /* Félkövér */
             margin-left: 4px;
             cursor: pointer;
             display: inline-flex;
@@ -114,6 +115,7 @@
             padding: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             transition: transform 0.1s;
+            line-height: 1; /* Fontos a vertikális középre igazításhoz */
         }
         .btn-mini:active { transform: scale(0.9); }
 
