@@ -357,13 +357,17 @@
                     row.classList.add("highlight");
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+
+                // --- MÓDOSÍTOTT RÉSZ: playBeep() hozzáadva minden gombhoz ---
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
-                        <button class="btn-mini btn-minus" onclick="modifyQty('${code}', -1)">➖</button>
-                        <button class="btn-mini btn-plus" onclick="modifyQty('${code}', 1)">➕</button>
-                        <button class="btn-mini btn-delete" onclick="askDeleteRow('${code}')">❌</button>
+                        <button class="btn-mini btn-minus" onclick="playBeep(); modifyQty('${code}', -1)">➖</button>
+                        <button class="btn-mini btn-plus" onclick="playBeep(); modifyQty('${code}', 1)">➕</button>
+                        <button class="btn-mini btn-delete" onclick="playBeep(); askDeleteRow('${code}')">❌</button>
                     </td>`;
+                // -----------------------------------------------------------
+
                 tbody.appendChild(row); 
             });
         }
