@@ -197,7 +197,7 @@
         }
 
         function playClick() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            /*if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
             const osc = audioCtx.createOscillator();
@@ -212,6 +212,20 @@
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); // Gyors halkulás
 
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid*/
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'triangle'; // Kicsit élesebb hang
+            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid
         }
