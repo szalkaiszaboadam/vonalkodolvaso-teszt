@@ -416,22 +416,52 @@
                     videoTrack = stream.getVideoTracks()[0];
                     const caps = videoTrack.getCapabilities();
                     const settings = videoTrack.getSettings();
+                    
                     if (caps.zoom) {
                         document.getElementById("zoom-container").style.display = "block";
                         const zs = document.getElementById("zoom-slider");
-                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step; zs.value = settings.zoom || 1;
+                        
+                        // Határok beállítása
+                        zs.min = caps.zoom.min; 
+                        zs.max = caps.zoom.max; 
+                        zs.step = caps.zoom.step; 
+
+                        // --- ÚJ RÉSZ: Mentett zoom betöltése ---
+                        let savedZoom = parseFloat(localStorage.getItem("leltar_zoom"));
+                        
+                        // Ellenőrizzük, hogy a mentett érték érvényes-e (a határokon belül van)
+                        if (!savedZoom || savedZoom < caps.zoom.min || savedZoom > caps.zoom.max) {
+                            savedZoom = settings.zoom || 1; // Ha nincs mentett, marad a gyári
+                        }
+                        
+                        zs.value = savedZoom;
+                        applyZoom(savedZoom); // Azonnali alkalmazás indításkor
+                        // --------------------------------------
                     }
+
                     if (caps.torch) document.getElementById("torch-btn").style.display = "inline-block";
                 }
             }, 500);
         }
-        function applyZoom(val) { if (videoTrack) videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] }).catch(e=>{}); }
+
+        function applyZoom(val) { 
+            if (videoTrack) {
+                const zoomVal = parseFloat(val);
+                videoTrack.applyConstraints({ advanced: [{ zoom: zoomVal }] })
+                .then(() => {
+                    // --- ÚJ RÉSZ: Zoom érték mentése sikeres váltáskor ---
+                    localStorage.setItem("leltar_zoom", zoomVal);
+                })
+                .catch(e=>{}); 
+            } 
+        }
+
         function toggleTorch() { if (videoTrack) { isTorchOn = !isTorchOn; videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(e=>{}); } }
 
         // INDÍTÁS
         window.onload = function() {
-            loadData(); // Adatok betöltése indításkor
-            startScanner(); // Kamera indítása
+            loadData(); 
+            startScanner(); 
         };
     </script>
 </body>
