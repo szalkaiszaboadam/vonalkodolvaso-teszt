@@ -177,7 +177,9 @@
             }
         }
 
-        // HANG
+        // --- HANGOK KEZELÉSE ---
+        
+        // HANG 1: Hosszú sípolás (Vonalkódhoz)
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -187,11 +189,24 @@
             osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
             osc.start(); setTimeout(() => osc.stop(), 150); 
         }
+
+        // HANG 2: Rövid klikk (Gombokhoz)
+        function playClick() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; osc.frequency.value = 1200; gain.gain.value = 0.1; 
+            osc.start(); setTimeout(() => osc.stop(), 50); 
+        }
+
+        // Első kattintásra inicializáljuk az AudioContextet (böngésző policy miatt)
         document.body.addEventListener('click', () => { if (!audioCtx) playBeep(); }, { once: true });
 
-        // KAMERA
+
+        // --- KAMERA KEZELÉS ---
         function startScanner() {
-            // Ha már fut, leállítjuk biztonságból
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
                     initCamera();
@@ -223,7 +238,6 @@
             });
         }
 
-        // Kézi újraindítás gombhoz
         function restartCamera() {
             startScanner();
         }
@@ -236,11 +250,10 @@
 
             isScanningPaused = true; 
             
-            // --- REZGÉS (Már benne volt, de itt a helye) ---
-            // Ha a telefon támogatja, 200 milliszekundumig rezeg
+            // Rezgés
             if (navigator.vibrate) navigator.vibrate(200); 
-            // -----------------------------------------------
 
+            // Eredeti hang
             playBeep();
 
             const isBulk = document.getElementById("bulk-mode").checked;
@@ -310,7 +323,7 @@
             if (inventoryData[code]) inventoryData[code] += amount;
             else inventoryData[code] = amount;
             updateTable(code);
-            saveData(); // Mentés minden változáskor
+            saveData(); 
         }
 
         function modifyQty(code, change) {
@@ -320,7 +333,7 @@
                     askDeleteRow(code);
                 } else {
                     updateTable(null);
-                    saveData(); // Mentés minden változáskor
+                    saveData(); 
                 }
             }
         }
@@ -333,7 +346,7 @@
         function performDeleteRow(code) {
             delete inventoryData[code];
             updateTable(null);
-            saveData(); // Mentés törléskor is
+            saveData(); 
         }
 
         function askClearAll() {
@@ -344,7 +357,7 @@
         function performClearAll() {
             inventoryData = {};
             updateTable();
-            saveData(); // Mentés ürítéskor is
+            saveData(); 
         }
 
         function updateTable(highlightCode) {
@@ -358,7 +371,7 @@
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 
-                // ITT CSERÉLTEM LE A HANGOT playClick()-re:
+                // Művelet gombok playClick() hívással
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
@@ -376,37 +389,11 @@
             const code = input.value.trim();
             if (code) {
                 isScanningPaused = true; 
-                
-                // --- ÚJ SOR: Rezgés kézi kódnál is ---
                 if (navigator.vibrate) navigator.vibrate(200);
-                // -------------------------------------
-
-                // EREDETI HANG (Vonalkódhoz)
-                function playBeep() {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
-                    osc.start(); setTimeout(() => osc.stop(), 150); // 150ms hosszú
-                }
-
-                // ÚJ HANG (Gombokhoz - Rövid és magasabb)
-                function playClick() {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    
-                    osc.type = 'square'; 
-                    osc.frequency.value = 1200; // Magasabb hang
-                    gain.gain.value = 0.1; 
-                    
-                    osc.start(); 
-                    setTimeout(() => osc.stop(), 50); // Csak 50ms (nagyon rövid)
-                }
+                playBeep(); 
+                if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
+                else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
+                input.value = "";
             }
         }
 
@@ -431,7 +418,7 @@
             XLSX.writeFile(workbook, "leltar.xlsx");
         }
 
-        // --- KAMERA EXTRÁK ---
+        // --- KAMERA EXTRÁK (ZOOM MENTÉSSEL) ---
         function setupCameraControls() {
             setTimeout(() => {
                 const videoElement = document.querySelector("#reader video");
@@ -444,23 +431,14 @@
                     if (caps.zoom) {
                         document.getElementById("zoom-container").style.display = "block";
                         const zs = document.getElementById("zoom-slider");
+                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step; 
                         
-                        // Határok beállítása
-                        zs.min = caps.zoom.min; 
-                        zs.max = caps.zoom.max; 
-                        zs.step = caps.zoom.step; 
-
-                        // --- ÚJ RÉSZ: Mentett zoom betöltése ---
                         let savedZoom = parseFloat(localStorage.getItem("leltar_zoom"));
-                        
-                        // Ellenőrizzük, hogy a mentett érték érvényes-e (a határokon belül van)
                         if (!savedZoom || savedZoom < caps.zoom.min || savedZoom > caps.zoom.max) {
-                            savedZoom = settings.zoom || 1; // Ha nincs mentett, marad a gyári
+                            savedZoom = settings.zoom || 1; 
                         }
-                        
                         zs.value = savedZoom;
-                        applyZoom(savedZoom); // Azonnali alkalmazás indításkor
-                        // --------------------------------------
+                        applyZoom(savedZoom); 
                     }
 
                     if (caps.torch) document.getElementById("torch-btn").style.display = "inline-block";
@@ -473,7 +451,6 @@
                 const zoomVal = parseFloat(val);
                 videoTrack.applyConstraints({ advanced: [{ zoom: zoomVal }] })
                 .then(() => {
-                    // --- ÚJ RÉSZ: Zoom érték mentése sikeres váltáskor ---
                     localStorage.setItem("leltar_zoom", zoomVal);
                 })
                 .catch(e=>{}); 
