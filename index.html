@@ -117,9 +117,9 @@
         }
         .btn-mini:active { transform: scale(0.9); }
 
-        .btn-minus { background-color: #6c757d; } /* Szürke */
-        .btn-plus { background-color: #2a9d8f; }  /* Zöld */
-        .btn-delete { background-color: #d62828; } /* Piros */
+        .btn-minus { background-color: #457b9d; } /* 2a9d8f */
+        .btn-plus { background-color: #d62828; }  /* Zöld */
+        .btn-delete { background-color: #6c757d; } /* Piros */
     </style>
 </head>
 <body>
@@ -211,20 +211,25 @@
         }
 
         // --- HANGOK ---
-        function playBeep() {
+         function playBeep() {
+
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
             if (audioCtx.state === 'suspended') audioCtx.resume();
+
             const osc = audioCtx.createOscillator();
+
             const gain = audioCtx.createGain();
+
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine'; 
-            osc.frequency.setValueAtTime(660, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
+
+            osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1;
+
+            osc.start(); setTimeout(() => osc.stop(), 150);
+
         }
+
+
 
         function playClick() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
