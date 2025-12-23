@@ -147,8 +147,8 @@
         </div>
 
         <div class="btn-group">
-            <button id="cam-restart-btn" onclick="playCameraSound(); restartCamera()">📷</button>
-            <button id="torch-btn" onclick="playTorchSound(); toggleTorch()">🔦</button>
+            <button id="cam-restart-btn" onclick="playClick(); restartCamera()">📷</button>
+            <button id="torch-btn" onclick="playClick(); toggleTorch()">🔦</button>
             <button id="clear-btn" onclick="playClick(); askClearAll()">🗑️</button>
             <button id="export-btn" onclick="playClick(); exportToExcel()">💾</button>
         </div>
@@ -245,22 +245,6 @@
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05); 
-        }
-
-        function playCameraSound() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const bufferSize = audioCtx.sampleRate * 0.1; 
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1; 
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            noise.connect(gain); gain.connect(audioCtx.destination);
-            noise.start();
         }
 
         function playTorchSound() {
@@ -443,9 +427,9 @@
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
-                        <button class="btn-mini btn-minus" onclick="playClick(); modifyQty('${code}', -1)">-</button>
-                        <button class="btn-mini btn-plus" onclick="playClick(); modifyQty('${code}', 1)">+</button>
-                        <button class="btn-mini btn-delete" onclick="playClick(); askDeleteRow('${code}')">🗑️</button>
+                        <button class="btn-mini btn-minus" onclick="playTorchSound(); modifyQty('${code}', -1)">-</button>
+                        <button class="btn-mini btn-plus" onclick="playTorchSound(); modifyQty('${code}', 1)">+</button>
+                        <button class="btn-mini btn-delete" onclick="playTorchSound(); askDeleteRow('${code}')">🗑️</button>
                     </td>`;
                 tbody.appendChild(row); 
             });
