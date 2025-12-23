@@ -7,7 +7,6 @@
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <style>
@@ -88,9 +87,11 @@
         .qty-col { font-weight: bold; text-align: center; width: 40px; }
         .action-col { text-align: right; }
 
+        /* GOMBOK A TÁBLÁZATBAN */
         .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
-        .btn-minus { background-color: #6c757d; }
-        .btn-delete { background-color: #d62828; }
+        .btn-minus { background-color: #6c757d; } /* Szürke */
+        .btn-plus { background-color: #2a9d8f; }  /* Zöld (ugyanaz mint a fejléc) */
+        .btn-delete { background-color: #d62828; } /* Piros */
     </style>
 </head>
 <body>
@@ -154,7 +155,6 @@
         let audioCtx;
         let isScanningPaused = false;
         
-        // Modal állapotok
         let currentAction = null; 
         let tempCode = "";
 
@@ -308,10 +308,12 @@
                     row.classList.add("highlight");
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+                // ÚJ RÉSZ: Hozzáadva a ➕ gomb
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
                         <button class="btn-mini btn-minus" onclick="modifyQty('${code}', -1)">➖</button>
+                        <button class="btn-mini btn-plus" onclick="modifyQty('${code}', 1)">➕</button>
                         <button class="btn-mini btn-delete" onclick="askDeleteRow('${code}')">❌</button>
                     </td>`;
                 tbody.appendChild(row); 
@@ -337,28 +339,18 @@
             document.getElementById("bulk-mode").checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
         }
 
-        // --- ÚJ EXCEL EXPORT FÜGGVÉNY ---
         function exportToExcel() {
-            // Ellenőrizzük, hogy van-e adat
             if (Object.keys(inventoryData).length === 0) {
                 alert("Nincs mit kimenteni!");
                 return;
             }
-
-            // Adatok átalakítása a SheetJS számára (Array of Objects)
             const dataToExport = Object.keys(inventoryData).map(code => ({
                 "Vonalkód": code,
                 "Darabszám": inventoryData[code]
             }));
-
-            // 1. Munkalap létrehozása az adatokból
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-
-            // 2. Munkafüzet létrehozása
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leltár");
-
-            // 3. Fájl mentése (leltar.xlsx)
             XLSX.writeFile(workbook, "leltar.xlsx");
         }
 
