@@ -357,17 +357,15 @@
                     row.classList.add("highlight");
                     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-
-                // --- MÓDOSÍTOTT RÉSZ: playBeep() hozzáadva minden gombhoz ---
+                
+                // ITT CSERÉLTEM LE A HANGOT playClick()-re:
                 row.innerHTML = `
                     <td>${code}</td><td class="qty-col">${qty}</td>
                     <td style="text-align:right; white-space:nowrap;">
-                        <button class="btn-mini btn-minus" onclick="playBeep(); modifyQty('${code}', -1)">➖</button>
-                        <button class="btn-mini btn-plus" onclick="playBeep(); modifyQty('${code}', 1)">➕</button>
-                        <button class="btn-mini btn-delete" onclick="playBeep(); askDeleteRow('${code}')">❌</button>
+                        <button class="btn-mini btn-minus" onclick="playClick(); modifyQty('${code}', -1)">➖</button>
+                        <button class="btn-mini btn-plus" onclick="playClick(); modifyQty('${code}', 1)">➕</button>
+                        <button class="btn-mini btn-delete" onclick="playClick(); askDeleteRow('${code}')">❌</button>
                     </td>`;
-                // -----------------------------------------------------------
-
                 tbody.appendChild(row); 
             });
         }
@@ -383,10 +381,32 @@
                 if (navigator.vibrate) navigator.vibrate(200);
                 // -------------------------------------
 
-                playBeep();
-                if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
-                else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
-                input.value = "";
+                // EREDETI HANG (Vonalkódhoz)
+                function playBeep() {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1; 
+                    osc.start(); setTimeout(() => osc.stop(), 150); // 150ms hosszú
+                }
+
+                // ÚJ HANG (Gombokhoz - Rövid és magasabb)
+                function playClick() {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    
+                    osc.type = 'square'; 
+                    osc.frequency.value = 1200; // Magasabb hang
+                    gain.gain.value = 0.1; 
+                    
+                    osc.start(); 
+                    setTimeout(() => osc.stop(), 50); // Csak 50ms (nagyon rövid)
+                }
             }
         }
 
