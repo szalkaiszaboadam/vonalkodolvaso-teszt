@@ -235,7 +235,12 @@
             if(code === "") return;
 
             isScanningPaused = true; 
+            
+            // --- REZGÉS (Már benne volt, de itt a helye) ---
+            // Ha a telefon támogatja, 200 milliszekundumig rezeg
             if (navigator.vibrate) navigator.vibrate(200); 
+            // -----------------------------------------------
+
             playBeep();
 
             const isBulk = document.getElementById("bulk-mode").checked;
@@ -369,6 +374,11 @@
             const code = input.value.trim();
             if (code) {
                 isScanningPaused = true; 
+                
+                // --- ÚJ SOR: Rezgés kézi kódnál is ---
+                if (navigator.vibrate) navigator.vibrate(200);
+                // -------------------------------------
+
                 playBeep();
                 if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
                 else { addQuantity(code, 1); setTimeout(() => { isScanningPaused = false; }, 1000); }
