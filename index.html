@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VONALKÓDOLVASÓ</title>
     <link rel="icon" type="image/png" href="logo.png">
+    
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f4; margin: 0; padding: 10px; }
@@ -81,9 +84,9 @@
         
         .highlight { background-color: #d4edda !important; }
         
-        /* Oszlop formázások - JAVÍTOTT RÉSZ */
+        /* Oszlop formázások */
         .qty-col { font-weight: bold; text-align: center; width: 40px; }
-        .action-col { text-align: right; } /* Ez tolja jobbra a fejlécet */
+        .action-col { text-align: right; }
 
         .btn-mini { padding: 6px 10px; margin-left: 2px; font-size: 14px; width: auto; }
         .btn-minus { background-color: #6c757d; }
@@ -115,7 +118,7 @@
         <div class="btn-group">
             <button id="torch-btn" onclick="toggleTorch()">🔦</button>
             <button id="clear-btn" onclick="askClearAll()">🗑️ Törlés</button>
-            <button id="export-btn" onclick="exportToCSV()">💾 Excel</button>
+            <button id="export-btn" onclick="exportToExcel()">💾 Excel</button>
         </div>
     </div>
 
@@ -152,7 +155,7 @@
         let isScanningPaused = false;
         
         // Modal állapotok
-        let currentAction = null; // 'bulk-add', 'delete-one', 'clear-all'
+        let currentAction = null; 
         let tempCode = "";
 
         // HANG
@@ -198,16 +201,14 @@
             const isBulk = document.getElementById("bulk-mode").checked;
 
             if (isBulk) {
-                // Tömeges mód -> Modal megnyitása
                 openModal('bulk-add', code);
             } else {
-                // Sima mód -> Azonnal hozzáad
                 addQuantity(code, 1);
-                setTimeout(() => { isScanningPaused = false; }, 3000); // 3 mp szünet
+                setTimeout(() => { isScanningPaused = false; }, 3000); 
             }
         }
 
-        // --- MODAL KEZELÉS (EZ HELYETTESÍTI A CONFIRM-et) ---
+        // --- MODAL KEZELÉS ---
         function openModal(action, code = "") {
             const overlay = document.getElementById("overlay");
             const title = document.getElementById("modal-text");
@@ -218,8 +219,8 @@
             tempCode = code;
             
             overlay.style.display = "flex";
-            input.style.display = "none"; // Alapból rejtve
-            okBtn.style.background = "#2a9d8f"; // Alapból zöld
+            input.style.display = "none"; 
+            okBtn.style.background = "#2a9d8f"; 
 
             if (action === 'bulk-add') {
                 title.innerHTML = `Kód: <b>${code}</b><br>Mennyiség?`;
@@ -229,11 +230,11 @@
             } 
             else if (action === 'delete-one') {
                 title.innerHTML = `Biztosan törlöd ezt?<br><b>${code}</b>`;
-                okBtn.style.background = "#d62828"; // Piros
+                okBtn.style.background = "#d62828"; 
             }
             else if (action === 'clear-all') {
                 title.innerHTML = `Minden adat törlése?<br>Ez nem vonható vissza!`;
-                okBtn.style.background = "#d62828"; // Piros
+                okBtn.style.background = "#d62828"; 
             }
         }
 
@@ -256,7 +257,6 @@
                 }
             }
 
-            // Ha nem tömeges törlés volt, újraindítjuk a szkennelést rövid idő múlva
             setTimeout(() => { isScanningPaused = false; }, 1000);
         }
 
@@ -271,7 +271,6 @@
             if (inventoryData[code]) {
                 inventoryData[code] += change;
                 if (inventoryData[code] <= 0) {
-                    // Ha 0 lesz, kérdezzen rá a törlésre
                     askDeleteRow(code);
                 } else {
                     updateTable(null);
@@ -279,19 +278,16 @@
             }
         }
 
-        // Törlés kérése (Modal nyitása)
         function askDeleteRow(code) {
-            isScanningPaused = true; // Megállítjuk a szkennelést, hogy ne zavarjon
+            isScanningPaused = true; 
             openModal('delete-one', code);
         }
         
-        // Tényleges törlés
         function performDeleteRow(code) {
             delete inventoryData[code];
             updateTable(null);
         }
 
-        // Összes törlés kérése
         function askClearAll() {
             isScanningPaused = true;
             openModal('clear-all');
@@ -340,12 +336,30 @@
             const box = document.getElementById("bulk-box"); 
             document.getElementById("bulk-mode").checked ? box.classList.add("bulk-active") : box.classList.remove("bulk-active");
         }
-        function exportToCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,Vonalkod,Darabszam\n";
-            Object.keys(inventoryData).forEach(code => csvContent += `${code},${inventoryData[code]}\n`);
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "leltar.csv");
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+        // --- ÚJ EXCEL EXPORT FÜGGVÉNY ---
+        function exportToExcel() {
+            // Ellenőrizzük, hogy van-e adat
+            if (Object.keys(inventoryData).length === 0) {
+                alert("Nincs mit kimenteni!");
+                return;
+            }
+
+            // Adatok átalakítása a SheetJS számára (Array of Objects)
+            const dataToExport = Object.keys(inventoryData).map(code => ({
+                "Vonalkód": code,
+                "Darabszám": inventoryData[code]
+            }));
+
+            // 1. Munkalap létrehozása az adatokból
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+            // 2. Munkafüzet létrehozása
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Leltár");
+
+            // 3. Fájl mentése (leltar.xlsx)
+            XLSX.writeFile(workbook, "leltar.xlsx");
         }
 
         // --- KAMERA EXTRÁK ---
