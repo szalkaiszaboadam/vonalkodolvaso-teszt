@@ -118,10 +118,10 @@
         </div>
 
        <div class="btn-group">
-            <button id="cam-restart-btn" onclick="playCameraSound(); restartCamera()">📷</button>
+            <button id="cam-restart-btn" onclick="playTorchSound(); restartCamera()">📷</button>
             <button id="torch-btn" onclick="playTorchSound(); toggleTorch()">🔦</button>
-            <button id="clear-btn" onclick="playClick(); askClearAll()">🗑️</button>
-            <button id="export-btn" onclick="playClick(); exportToExcel()">💾</button>
+            <button id="clear-btn" onclick="playTorchSound(); askClearAll()">🗑️</button>
+            <button id="export-btn" onclick="playTorchSound(); exportToExcel()">💾</button>
         </div>
     </div>
 
@@ -185,9 +185,7 @@
             }
         }
 
-        // --- ÚJ, SZEBB HANGOK ---
-        
-        // HANG 1: Kellemesebb "ding" (Vonalkódhoz)
+        // --- HANGOK ---
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -198,7 +196,6 @@
             osc.start(); setTimeout(() => osc.stop(), 150); 
         }
 
-        // HANG 2: Rövid, lágy "pop" (Gombokhoz)
         function playClick() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -218,32 +215,8 @@
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid
         }
-        function playCameraSound() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+        
 
-            // Puffer létrehozása zajhoz
-            const bufferSize = audioCtx.sampleRate * 0.1; // 0.1 mp hossz
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1; // Fehér zaj generálás
-            }
-
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            
-            const gain = audioCtx.createGain();
-            // Zaj burkológörbe (halkulás)
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            
-            noise.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start();
-        }
-
-        // 4. Lámpa gomb ("Kapcsoló" / Switch - Éles klikk)
         function playTorchSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
