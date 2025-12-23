@@ -197,23 +197,6 @@
         }
 
         function playClick() {
-            /*if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            // Szinusz hullám
-            osc.type = 'sine'; 
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); // Gyors halkulás
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid*/
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -234,18 +217,21 @@
         function playTorchSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
+            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
-            osc.type = 'triangle'; // Kicsit élesebb hang
-            osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             
+            // Szinusz hullám
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); // Gyors halkulás
+
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid
+            osc.stop(audioCtx.currentTime + 0.05); // Nagyon rövid*/
         }
 
         // Első kattintásra inicializáljuk az AudioContextet
