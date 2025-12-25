@@ -25,6 +25,7 @@
             overflow: hidden;
         }
 
+        /* FELSŐ NAVIGÁCIÓ */
         nav {
             display: flex;
             background: white;
@@ -53,6 +54,7 @@
         }
         .tab-btn span { font-size: 24px; }
 
+        /* TARTALOM */
         .content-area {
             flex: 1;
             position: relative;
@@ -62,6 +64,7 @@
         }
         .content-area.active { display: block; }
 
+        /* SZKENNER */
         #scanner { background: #000; }
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
@@ -95,9 +98,10 @@
         #backdrop {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             display: none;
             z-index: 1500;
+            backdrop-filter: blur(2px);
         }
 
         #drawer {
@@ -105,17 +109,72 @@
             bottom: -100%;
             left: 0; right: 0;
             background: white;
-            border-radius: 20px 20px 0 0;
-            padding: 20px 20px calc(30px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+            border-radius: 25px 25px 0 0;
+            padding: 20px 25px calc(40px + env(safe-area-inset-bottom));
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
             transition: bottom 0.3s cubic-bezier(0, 0, 0.2, 1);
             z-index: 2000;
         }
         #drawer.open { bottom: 0; }
         #backdrop.active { display: block; }
         
-        .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 10px; margin: 0 auto 15px; }
+        .drawer-handle { width: 50px; height: 5px; background: #eee; border-radius: 10px; margin: 0 auto 20px; }
 
+        /* KIEMELT ADATOK */
+        #drawer-code {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 5px;
+            word-break: break-all;
+            letter-spacing: -1px;
+        }
+        #drawer-info {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        /* NAGY INPUT ÉS GOMB */
+        .big-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .qty-input-large {
+            width: 100%;
+            max-width: 200px;
+            height: 80px;
+            font-size: 42px;
+            text-align: center;
+            border: 3px solid #eee;
+            border-radius: 15px;
+            font-weight: 800;
+            color: var(--dark);
+            background: #f9f9f9;
+        }
+        .qty-input-large:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+        }
+
+        .btn-ok-large {
+            width: 100%;
+            height: 70px;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--primary);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(42, 157, 143, 0.3);
+        }
+
+        /* LISTA KÁRTYÁK */
         .inventory-list { padding: 10px 15px 100px 15px; }
         .item-card {
             background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
@@ -124,12 +183,11 @@
             border-left: 5px solid var(--primary);
         }
 
-        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; }
+        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
         .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); }
         .btn-dark { background: var(--dark); }
         .btn-danger { background: var(--danger); }
-        .qty-input { width: 75px; padding: 10px; font-size: 22px; text-align: center; border: 1px solid #ccc; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -169,16 +227,22 @@
     <div id="drawer">
         <div class="drawer-handle"></div>
         <div style="text-align: center;">
-            <div id="drawer-code" style="font-size: 1.4rem; font-weight: bold; color: var(--dark); margin-bottom: 5px;">---</div>
-            <div id="drawer-info" style="color: #888; margin-bottom: 20px;">Készleten: 0 db</div>
-            <div style="display: flex; align-items: center; gap: 12px; justify-content: center; width:100%;">
-                <button class="btn btn-dark" style="flex:1" onclick="addFromDrawer(1)">+1 darab</button>
-                <input type="number" id="drawer-qty" class="qty-input" value="1" 
+            <div id="drawer-code">---</div>
+            <div id="drawer-info">Készleten: 0 db</div>
+            
+            <div class="big-input-group">
+                <input type="number" id="drawer-qty" class="qty-input-large" value="1" 
                        onfocus="cancelAutoClose()" 
                        onclick="this.select()">
-                <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
+                
+                <button class="btn btn-primary btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">
+                    Hozzáadás
+                </button>
             </div>
-            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;" onclick="closeDrawer(false)">Mégse (Kilépés mentés nélkül)</button>
+            
+            <button class="btn" style="color: #bbb; background:none; margin-top:20px; width:100%; font-weight:normal;" onclick="closeDrawer(false)">
+                Mégse (Kilépés mentés nélkül)
+            </button>
         </div>
     </div>
 
@@ -221,14 +285,12 @@
             playBeep();
 
             document.getElementById('drawer-code').innerText = code;
-            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-info').innerText = "Aktuális készlet: " + (inventoryData[code] || 0) + " db";
             document.getElementById('drawer-qty').value = 1;
             
-            // Drawer nyitás
             document.getElementById('drawer').classList.add('open');
             document.getElementById('backdrop').classList.add('active');
 
-            // Automatikus mentés és bezárás 3mp múlva
             startAutoClose();
         }
 
@@ -251,15 +313,12 @@
             document.getElementById('drawer').classList.remove('open');
             document.getElementById('backdrop').classList.remove('active');
             
-            // Rövid késleltetés, hogy a fizikai animáció lefusson mielőtt újra engedjük a szkennert
-            setTimeout(() => { 
-                isScanningPaused = false; 
-            }, 400);
+            setTimeout(() => { isScanningPaused = false; }, 400);
         }
 
         function addFromDrawer(val) {
             const qty = parseInt(val);
-            if (qty > 0) {
+            if (!isNaN(qty) && qty > 0) {
                 inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + qty;
                 updateUI(); saveData();
             }
@@ -303,7 +362,7 @@
                 videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
                 
-                // ALAPÉRTELMEZETT ZOOM: 2.0
+                // ALAP ZOOM 2.0x
                 const savedZoom = localStorage.getItem("app_zoom") || 2.0;
                 applyZoom(savedZoom);
                 document.getElementById("zoom-slider").value = savedZoom;
