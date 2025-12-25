@@ -202,11 +202,14 @@
         }
 
         // --- SZKENNER ---
-        function startScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => initCamera()).catch(() => initCamera());
-            } else { initCamera(); }
-        }
+// A startScanner függvényt kicsit okosabbra cseréltük
+function startScanner() {
+    if (html5QrCode && html5QrCode.getState() === 2) { 
+        // Ha már fut (SCANNING állapot), nem indítjuk újra
+        return; 
+    }
+    initCamera();
+}
 
         function initCamera() {
             html5QrCode = new Html5Qrcode("reader");
