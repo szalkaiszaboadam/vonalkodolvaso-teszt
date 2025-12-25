@@ -6,19 +6,22 @@
     <title>Leltár App Pro</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         :root {
-            --primary: #2a9d8f;
-            --dark: #264653;
-            --danger: #e76f51;
-            --bg: #f4f4f4;
-            --success: #2ecc71;
+            --primary: #0044cc; /* Kék */
+            --dark: #1a1a1a;    /* Fekete/Sötétszürke */
+            --danger: #cc0000;  /* Piros */
+            --grey: #888888;
+            --light-grey: #f0f0f0;
+            --bg: #ffffff;
         }
 
         body { 
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0; padding: 0; 
             background: #000;
             height: 100dvh;
@@ -26,95 +29,97 @@
             overflow: hidden;
         }
 
+        /* Navigáció */
         nav {
             display: flex;
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--light-grey);
             z-index: 1000;
             padding-top: env(safe-area-inset-top);
-            height: calc(75px + env(safe-area-inset-top));
+            height: calc(70px + env(safe-area-inset-top));
         }
         .tab-btn {
             flex: 1;
             padding: 10px 5px;
             border: none;
             background: none;
-            font-size: 12px;
-            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--grey);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
+            transition: 0.2s;
         }
         .tab-btn.active {
             color: var(--primary);
-            border-bottom: 4px solid var(--primary);
-            font-weight: bold;
+            font-weight: 700;
         }
-        .tab-btn span { font-size: 24px; }
+        .tab-btn i { width: 20px; height: 20px; }
 
+        /* Tartalom */
         .content-area {
             flex: 1;
             position: relative;
             display: none;
             background: var(--bg);
-            overflow: hidden;
+            overflow-y: auto;
         }
         .content-area.active { display: block; }
 
-        #scanner { background: #000; }
+        /* Szkenner */
+        #scanner { background: #000; overflow: hidden; }
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
         
-        /* SZKENNER KERET - FENTebb TOLVA (40% helyett 50% volt) */
+        /* Keret középre igazítva */
         .scan-overlay {
             position: absolute;
-            top: 40%; left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 260px; height: 160px;
-            border: 2px solid rgba(255,255,255,0.8);
-            border-radius: 15px;
-            box-shadow: 0 0 0 5000px rgba(0,0,0,0.5);
+            border: 2px solid white;
+            border-radius: 12px;
+            box-shadow: 0 0 0 5000px rgba(0,0,0,0.6);
             pointer-events: none;
             z-index: 5;
         }
 
-        /* KAMERA VEZÉRLŐK */
         .camera-controls {
             position: absolute;
             bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 20px;
+            gap: 25px;
             z-index: 100;
         }
 
         .control-btn {
-            width: 60px; height: 60px;
+            width: 56px; height: 56px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.6);
-            border: 2px solid #fff;
-            color: #fff; font-size: 24px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
-
-        #torch-btn.active {
-            background: var(--success);
-            border-color: var(--success);
-            box-shadow: 0 0 15px var(--success);
+        .control-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
         }
 
-        /* DRAWER & BACKDROP */
+        /* Drawer */
         #backdrop {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.8);
             display: none;
             z-index: 1500;
-            backdrop-filter: blur(2px);
         }
 
         #drawer {
@@ -122,47 +127,62 @@
             bottom: -100%;
             left: 0; right: 0;
             background: white;
-            border-radius: 25px 25px 0 0;
-            padding: 20px 25px calc(40px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            transition: bottom 0.3s cubic-bezier(0, 0, 0.2, 1);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 25px calc(30px + env(safe-area-inset-bottom));
+            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 2000;
         }
         #drawer.open { bottom: 0; }
         #backdrop.active { display: block; }
-        .drawer-handle { width: 50px; height: 5px; background: #eee; border-radius: 10px; margin: 0 auto 20px; }
+        .drawer-handle { width: 40px; height: 4px; background: var(--light-grey); border-radius: 2px; margin: 0 auto 20px; }
 
-        #drawer-code { font-size: 2.2rem; font-weight: 800; color: var(--dark); margin-bottom: 5px; word-break: break-all; }
-        #drawer-info { font-size: 1.2rem; color: var(--primary); font-weight: 600; margin-bottom: 25px; }
+        #drawer-code { font-size: 1.8rem; font-weight: 700; color: var(--dark); margin-bottom: 5px; word-break: break-all; }
+        #drawer-info { font-size: 1rem; color: var(--grey); margin-bottom: 25px; }
 
-        .big-input-group { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
         .qty-input-large {
-            width: 100%; max-width: 200px; height: 80px; font-size: 42px; text-align: center;
-            border: 3px solid #eee; border-radius: 15px; font-weight: 800; background: #f9f9f9;
+            width: 100%; max-width: 160px; height: 70px; font-size: 32px; text-align: center;
+            border: 1px solid var(--light-grey); border-radius: 12px; font-weight: 700; background: var(--light-grey);
+            margin-bottom: 15px; outline: none;
         }
-        .btn-ok-large {
-            width: 100%; height: 70px; font-size: 20px; text-transform: uppercase;
-            background: var(--primary); border-radius: 15px; color: white; border: none; font-weight: bold;
-        }
+        .qty-input-large:focus { border-color: var(--primary); background: white; }
 
-        .inventory-list { padding: 10px 15px 100px 15px; }
+        /* Listaelemek */
         .item-card {
-            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            background: white; padding: 16px; border-radius: 0; margin-bottom: 0;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid var(--primary);
+            border-bottom: 1px solid var(--light-grey);
         }
 
-        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; }
-        .btn-dark { background: var(--dark); }
-        .btn-danger { background: var(--danger); }
+        /* Gombok */
+        .btn { 
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 20px; border-radius: 8px; border: none; font-weight: 600; 
+            cursor: pointer; transition: 0.2s; font-size: 14px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-dark { background: var(--dark); color: white; }
+        .btn-outline { background: white; color: var(--dark); border: 1px solid var(--light-grey); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-ok-large { width: 100%; height: 60px; font-size: 16px; background: var(--dark); color: white; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; }
+
+        .qty-controls { display: flex; align-items: center; gap: 4px; }
+        .btn-qty { width: 36px; height: 36px; padding: 0; border-radius: 6px; }
+
+        h3 { margin: 0 0 20px 0; font-weight: 800; font-size: 24px; }
     </style>
 </head>
 <body>
 
     <nav>
-        <button class="tab-btn active" onclick="showTab('scanner', this)"><span>📷</span>Szkenner</button>
-        <button class="tab-btn" onclick="showTab('list', this)"><span>📋</span>Lista</button>
-        <button class="tab-btn" onclick="showTab('settings', this)"><span>⚙️</span>Beállítások</button>
+        <button class="tab-btn active" onclick="showTab('scanner', this)">
+            <i data-lucide="camera"></i>Szkenner
+        </button>
+        <button class="tab-btn" onclick="showTab('list', this)">
+            <i data-lucide="list"></i>Lista
+        </button>
+        <button class="tab-btn" onclick="showTab('settings', this)">
+            <i data-lucide="settings"></i>Beállítások
+        </button>
     </nav>
 
     <div id="scanner" class="content-area active">
@@ -170,27 +190,35 @@
         <div class="scan-overlay"></div>
         
         <div class="camera-controls">
-            <button id="restart-cam-btn" class="control-btn" onclick="restartCamera()" title="Kamera Újraindítása">🔄</button>
-            <button id="torch-btn" class="control-btn" onclick="toggleTorch()" style="display:none;">🔦</button>
+            <button id="restart-cam-btn" class="control-btn" onclick="restartCamera()">
+                <i data-lucide="refresh-cw"></i>
+            </button>
+            <button id="torch-btn" class="control-btn" onclick="toggleTorch()" style="display:none;">
+                <i data-lucide="zap"></i>
+            </button>
         </div>
     </div>
 
     <div id="list" class="content-area">
-        <div style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid #eee;">
-            <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">💾 Excel Mentés</button>
-            <button class="btn btn-danger" onclick="askClearAll()">🗑️ Törlés</button>
+        <div style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid var(--light-grey);">
+            <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">
+                <i data-lucide="download" style="width:16px"></i> Mentés
+            </button>
+            <button class="btn btn-outline" onclick="askClearAll()">
+                <i data-lucide="trash-2" style="width:16px; color:var(--danger)"></i>
+            </button>
         </div>
-        <div id="inventory-container" class="inventory-list"></div>
+        <div id="inventory-container"></div>
     </div>
 
-    <div id="settings" class="content-area" style="padding: 20px;">
+    <div id="settings" class="content-area" style="padding: 25px;">
         <h3>Beállítások</h3>
-        <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <label>🔍 Kamera Zoom:</label>
+        <div style="background: var(--light-grey); padding: 20px; border-radius: 16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <label style="font-weight:600;">Kamera Zoom</label>
                 <b id="zoom-label">2.0x</b>
             </div>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2.0" style="width:100%" oninput="applyZoom(this.value)">
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2.0" style="width:100%; accent-color:var(--dark);" oninput="applyZoom(this.value)">
         </div>
     </div>
 
@@ -199,12 +227,10 @@
         <div class="drawer-handle"></div>
         <div style="text-align: center;">
             <div id="drawer-code">---</div>
-            <div id="drawer-info">Aktuális készlet: 0 db</div>
-            <div class="big-input-group">
-                <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
-                <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
-            </div>
-            <button class="btn" style="color: #bbb; background:none; margin-top:20px; width:100%;" onclick="closeDrawer(false)">Mégse (Kilépés)</button>
+            <div id="drawer-info">Készleten: 0 db</div>
+            <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
+            <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
+            <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
         </div>
     </div>
 
@@ -223,6 +249,7 @@
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
             closeDrawer(false);
+            if(tabId === 'list') updateUI();
         }
 
         function initCam() {
@@ -235,7 +262,7 @@
 
         function startCam() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 20, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
+            const config = { fps: 25, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
             
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => setupExtras())
@@ -244,10 +271,9 @@
 
         function restartCamera() {
             const btn = document.getElementById('restart-cam-btn');
-            btn.style.transform = "rotate(360deg)";
-            btn.style.transition = "0.5s";
+            btn.style.transform = "rotate(180deg)";
             initCam();
-            setTimeout(() => { btn.style.transform = "rotate(0deg)"; btn.style.transition = "0s"; }, 500);
+            setTimeout(() => { btn.style.transform = "rotate(0deg)"; }, 500);
         }
 
         function setupExtras() {
@@ -255,15 +281,10 @@
             if (video && video.srcObject) {
                 videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
-                
                 const savedZoom = localStorage.getItem("app_zoom") || 2.0;
                 applyZoom(savedZoom);
                 document.getElementById("zoom-slider").value = savedZoom;
-                
-                if (caps.torch) {
-                    document.getElementById("torch-btn").style.display = "flex";
-                    updateTorchUI();
-                }
+                if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
             }
         }
 
@@ -272,16 +293,9 @@
                 const settings = videoTrack.getSettings();
                 const newState = !settings.torch;
                 videoTrack.applyConstraints({ advanced: [{ torch: newState }] })
-                .then(() => updateTorchUI());
-            }
-        }
-
-        function updateTorchUI() {
-            const btn = document.getElementById('torch-btn');
-            if (videoTrack) {
-                const isOn = videoTrack.getSettings().torch;
-                if (isOn) btn.classList.add('active');
-                else btn.classList.remove('active');
+                .then(() => {
+                    document.getElementById('torch-btn').classList.toggle('active', newState);
+                });
             }
         }
 
@@ -291,7 +305,7 @@
             lastScannedCode = code;
             playBeep();
             document.getElementById('drawer-code').innerText = code;
-            document.getElementById('drawer-info').innerText = "Aktuális készlet: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
             document.getElementById('drawer-qty').value = 1;
             document.getElementById('drawer').classList.add('open');
             document.getElementById('backdrop').classList.add('active');
@@ -320,7 +334,7 @@
             const qty = parseInt(val);
             if (!isNaN(qty) && qty > 0) {
                 inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + qty;
-                updateUI(); saveData();
+                saveData();
             }
             closeDrawer(true);
         }
@@ -330,26 +344,31 @@
             container.innerHTML = "";
             const keys = Object.keys(inventoryData).reverse();
             if (keys.length === 0) {
-                container.innerHTML = "<div style='text-align:center; color:#bbb; margin-top:50px;'>Üres lista...</div>";
+                container.innerHTML = "<div style='text-align:center; color:#bbb; margin-top:80px;'><i data-lucide='package-open' style='width:48px; height:48px; opacity:0.3'></i><p>A lista üres</p></div>";
+                lucide.createIcons();
                 return;
             }
             keys.forEach(code => {
                 const card = document.createElement('div');
                 card.className = 'item-card';
                 card.innerHTML = `
-                    <div><b style="font-size:1.1rem">${code}</b><br><span style="color:var(--primary); font-weight:bold;">${inventoryData[code]} db</span></div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-dark" onclick="modQty('${code}', -1)">-</button>
-                        <button class="btn btn-primary" onclick="modQty('${code}', 1)">+</button>
-                        <button class="btn btn-danger" onclick="delItem('${code}')">🗑️</button>
+                    <div>
+                        <div style="font-size:14px; font-weight:700; color:var(--dark);">${code}</div>
+                        <div style="color:var(--primary); font-weight:700; font-size:13px; margin-top:2px;">${inventoryData[code]} db</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button class="btn btn-outline btn-qty" onclick="modQty('${code}', -1)"><i data-lucide="minus" style="width:16px"></i></button>
+                        <button class="btn btn-outline btn-qty" onclick="modQty('${code}', 1)"><i data-lucide="plus" style="width:16px"></i></button>
+                        <button class="btn btn-outline btn-qty" style="margin-left:8px;" onclick="delItem('${code}')"><i data-lucide="trash-2" style="width:16px; color:var(--danger)"></i></button>
                     </div>`;
                 container.appendChild(card);
             });
+            lucide.createIcons();
         }
 
         function modQty(c, v) { inventoryData[c] += v; if(inventoryData[c] <= 0) delete inventoryData[c]; updateUI(); saveData(); }
-        function delItem(c) { if(confirm("Törlés?")) { delete inventoryData[c]; updateUI(); saveData(); } }
-        function askClearAll() { if(confirm("Minden adatot törölsz?")) { inventoryData = {}; updateUI(); saveData(); } }
+        function delItem(c) { if(confirm("Törli az elemet?")) { delete inventoryData[c]; updateUI(); saveData(); } }
+        function askClearAll() { if(confirm("Biztosan törli az összes adatot?")) { inventoryData = {}; updateUI(); saveData(); } }
 
         function applyZoom(v) {
             if (videoTrack) {
@@ -364,12 +383,12 @@
             const osc = audioCtx.createOscillator();
             const g = audioCtx.createGain();
             osc.connect(g); g.connect(audioCtx.destination);
-            osc.frequency.value = 880; g.gain.value = 0.1;
+            osc.frequency.value = 800; g.gain.value = 0.05;
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function exportToExcel() {
-            if (Object.keys(inventoryData).length === 0) return alert("Nincs adat!");
+            if (Object.keys(inventoryData).length === 0) return;
             const data = Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Mennyiség": inventoryData[k]}));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -377,13 +396,17 @@
             XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        function saveData() { localStorage.setItem("inventory_v6", JSON.stringify(inventoryData)); }
+        function saveData() { localStorage.setItem("inventory_pro_v1", JSON.stringify(inventoryData)); }
         function loadData() {
-            const saved = localStorage.getItem("inventory_v6");
-            if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
+            const saved = localStorage.getItem("inventory_pro_v1");
+            if (saved) { inventoryData = JSON.parse(saved); }
         }
 
-        window.onload = () => { loadData(); initCam(); };
+        window.onload = () => { 
+            lucide.createIcons();
+            loadData(); 
+            initCam(); 
+        };
     </script>
 </body>
 </html>
