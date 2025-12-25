@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VONALKÓDOLVASÓ PRO</title>
+    <title>VONALKÓDOLVASÓ</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -13,7 +13,7 @@
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f4; margin: 0; padding: 10px; }
         h2 { color: #333; margin: 5px 0 10px 0; font-size: 1.2rem; }
 
-        /* KAMERA KERET - Változatlan méret */
+        /* KAMERA KERET - Visszaállítva az eredeti tökéletes állapotra */
         #reader {
             width: 100%;
             max-width: 500px;
@@ -24,26 +24,25 @@
             background: #000;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             position: relative;
-            transition: opacity 0.3s;
         }
+        /* EZ HIÁNYZOTT: A videó kitöltése */
+        #reader video { object-fit: cover; width: 100%; height: 100%; }
 
-        /* Vizuális visszajelzés szkennelés után */
-        #reader.scanner-paused {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        #reader.scanner-paused::after {
-            content: "VÁRAKOZÁS...";
+        /* Várakozás jelzése (elhalványítás) */
+        .scanner-paused video { opacity: 0.4; filter: blur(2px); }
+        .pause-overlay {
+            display: none;
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             color: white;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             padding: 10px 20px;
             border-radius: 20px;
             font-weight: bold;
             z-index: 10;
         }
+        .scanner-paused .pause-overlay { display: block; }
 
         /* VEZÉRLŐK */
         .controls { 
@@ -55,14 +54,15 @@
         .manual-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
         button { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
         .btn-add { background-color: #2a9d8f; }
+        
         .btn-group { display: flex; gap: 8px; margin-top: 10px; justify-content: space-between; }
         .btn-group button { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 24px; padding: 12px 0; }
+
         #clear-btn { background-color: #e76f51; }
         #export-btn { background-color: #264653; }
         #torch-btn { background-color: #e9c46a; color: #333; display: none; }
         #cam-restart-btn { background-color: #457b9d; }
 
-        /* Zoom & Tömeges mód */
         #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
         .bulk-toggle-container { display: flex; align-items: center; justify-content: center; padding: 8px; background: #eee; border-radius: 8px; margin-bottom: 5px; }
         .bulk-toggle-container input { margin-right: 10px; transform: scale(1.3); }
@@ -80,7 +80,6 @@
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
         
-        /* Villogásmentes kiemelés */
         .row-updated { animation: highlight-fade 1.5s ease-out; }
         @keyframes highlight-fade {
             0% { background-color: #d4edda; }
@@ -99,7 +98,9 @@
 
     <h2>VONALKÓDOLVASÓ</h2>
     
-    <div id="reader"></div>
+    <div id="reader">
+        <div class="pause-overlay">VÁRAKOZÁS...</div>
+    </div>
 
     <div class="controls">
         <div class="manual-input-group">
@@ -140,7 +141,7 @@
 
     <div id="overlay">
         <div class="modal-box">
-            <div id="modal-text" class="modal-title" style="font-weight:bold; margin-bottom:10px;">Üzenet</div>
+            <div id="modal-text" style="font-weight:bold; margin-bottom:10px;">Üzenet</div>
             <input type="number" id="modal-qty-input" value="1" min="1">
             <div class="modal-btns">
                 <button onclick="playClick(); closeModal(false)" style="background:#666;">Mégse</button>
@@ -167,7 +168,6 @@
             if (saved) {
                 try {
                     inventoryData = JSON.parse(saved);
-                    // Kezdeti betöltésnél újraépítjük a táblázatot
                     const tbody = document.getElementById("table-body");
                     tbody.innerHTML = "";
                     Object.keys(inventoryData).reverse().forEach(code => renderRow(code, false));
@@ -201,7 +201,7 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.05); 
         }
 
-        // --- SZKENNER LOGIKA ---
+        // --- SZKENNER ---
         function startScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => initCamera()).catch(() => initCamera());
@@ -210,7 +210,11 @@
 
         function initCamera() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 15, qrbox: { width: 250, height: 150 }, aspectRatio: 1.77 };
+            const config = { 
+                fps: 15, 
+                qrbox: { width: 250, height: 150 },
+                videoConstraints: { facingMode: "environment" }
+            };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => setupCameraControls())
             .catch(err => alert("Kamera hiba: Engedélyezd a hozzáférést!"));
@@ -218,7 +222,6 @@
 
         function onScanSuccess(decodedText) {
             if (isScanningPaused) return;
-
             const code = decodedText.trim();
             if(!code) return;
 
@@ -229,7 +232,7 @@
                 openModal('bulk-add', code);
             } else {
                 addQuantity(code, 1);
-                setTimeout(() => pauseScanner(false), 1500); // Gyorsabb várakozás
+                setTimeout(() => pauseScanner(false), 1500); 
             }
         }
 
@@ -241,18 +244,15 @@
 
         function restartCamera() { startScanner(); }
 
-        // --- TÁBLÁZAT FRISSÍTÉS (OPTIMALIZÁLT) ---
+        // --- TÁBLÁZAT ---
         function renderRow(code, isNewAction) {
             const tbody = document.getElementById("table-body");
             let row = document.getElementById("row-" + code);
-
             if (!row) {
-                // Új sor létrehozása a táblázat elején
                 row = document.createElement("tr");
                 row.id = "row-" + code;
                 tbody.insertBefore(row, tbody.firstChild);
             }
-
             row.innerHTML = `
                 <td>${code}</td>
                 <td class="qty-col">${inventoryData[code]}</td>
@@ -261,12 +261,10 @@
                     <button class="btn-mini btn-plus" onclick="modifyQty('${code}', 1)">+</button>
                     <button class="btn-mini btn-delete" onclick="askDeleteRow('${code}')">🗑️</button>
                 </td>`;
-
             if (isNewAction) {
                 row.classList.remove("row-updated");
-                void row.offsetWidth; // Force reflow az animáció újraindításához
+                void row.offsetWidth;
                 row.classList.add("row-updated");
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -288,37 +286,28 @@
         // --- EXPORT DÁTUMMAL ---
         function exportToExcel() {
             if (Object.keys(inventoryData).length === 0) { alert("Nincs adat!"); return; }
-            
             const dataToExport = Object.keys(inventoryData).map(code => ({
-                "Vonalkód": code,
-                "Darabszám": inventoryData[code]
+                "Vonalkód": code, "Darabszám": inventoryData[code]
             }));
-
-            const now = new Date();
-            const dateStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
-            const filename = `leltar_${dateStr}.xlsx`;
-
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Leltár");
-            XLSX.writeFile(workbook, filename);
+            const d = new Date();
+            const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Leltár");
+            XLSX.writeFile(wb, `leltar_${dateStr}.xlsx`);
         }
 
-        // --- MODAL & EGYÉB ---
+        // --- MODAL ---
         function openModal(action, code = "") {
             currentAction = action; tempCode = code;
             document.getElementById("overlay").style.display = "flex";
             const input = document.getElementById("modal-qty-input");
-            const okBtn = document.getElementById("modal-confirm-btn");
-            
             input.style.display = (action === 'bulk-add') ? "block" : "none";
             if(action === 'bulk-add') {
                 document.getElementById("modal-text").innerHTML = `Kód: <b>${code}</b><br>Mennyiség?`;
                 input.value = 1; input.focus();
-                okBtn.style.background = "#2a9d8f";
             } else {
                 document.getElementById("modal-text").innerHTML = action === 'clear-all' ? "Minden adat törlése?" : `Törlöd ezt: ${code}?`;
-                okBtn.style.background = "#d62828";
             }
         }
 
@@ -330,8 +319,7 @@
                     if (qty > 0) addQuantity(tempCode, qty);
                 } else if (currentAction === 'delete-one') {
                     delete inventoryData[tempCode];
-                    const row = document.getElementById("row-" + tempCode);
-                    if(row) row.remove();
+                    if(document.getElementById("row-" + tempCode)) document.getElementById("row-" + tempCode).remove();
                     saveData();
                 } else if (currentAction === 'clear-all') {
                     inventoryData = {}; document.getElementById("table-body").innerHTML = "";
@@ -363,9 +351,9 @@
 
         function setupCameraControls() {
             setTimeout(() => {
-                const videoElement = document.querySelector("#reader video");
-                if (videoElement && videoElement.srcObject) {
-                    videoTrack = videoElement.srcObject.getVideoTracks()[0];
+                const v = document.querySelector("#reader video");
+                if (v && v.srcObject) {
+                    videoTrack = v.srcObject.getVideoTracks()[0];
                     const caps = videoTrack.getCapabilities();
                     if (caps.zoom) {
                         document.getElementById("zoom-container").style.display = "block";
