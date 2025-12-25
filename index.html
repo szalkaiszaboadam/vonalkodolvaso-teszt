@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Leltár App</title>
+    <title>Leltár App Fix</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
+        /* GLOBÁLIS BEÁLLÍTÁSOK A KILÓGÁS ELLEN */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         :root {
             --primary: #2a9d8f;
             --dark: #264653;
@@ -17,54 +20,58 @@
         body { 
             font-family: 'Segoe UI', sans-serif; 
             margin: 0; padding: 0; 
-            background: var(--bg); 
-            height: 100vh; display: flex; flex-direction: column;
+            background: black; /* A kamera alatt fekete legyen */
+            height: 100vh;
+            height: 100dvh; /* Dinamikus magasság mobilra */
+            display: flex; flex-direction: column;
             overflow: hidden;
         }
 
-        /* FELSŐ NAVIGÁCIÓ */
+        /* FELSŐ NAVIGÁCIÓ - Fix magasság */
         nav {
             display: flex;
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             z-index: 1000;
             padding-top: env(safe-area-inset-top);
+            height: calc(70px + env(safe-area-inset-top));
         }
         .tab-btn {
             flex: 1;
-            padding: 12px 5px;
+            padding: 10px 5px;
             border: none;
             background: none;
-            font-size: 13px;
-            color: #666;
-            cursor: pointer;
+            font-size: 12px;
+            color: #888;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 2px;
         }
         .tab-btn.active {
             color: var(--primary);
-            border-bottom: 3px solid var(--primary);
+            border-bottom: 4px solid var(--primary);
             font-weight: bold;
         }
-        .tab-btn span { font-size: 22px; }
+        .tab-btn span { font-size: 20px; }
 
         /* TARTALOM TERÜLETEK */
         .content-area {
             flex: 1;
             position: relative;
             display: none;
-            overflow-y: auto;
+            overflow: hidden; /* A szkenner ne görögjön */
+            background: var(--bg);
         }
         .content-area.active { display: block; }
 
-        /* SZKENNER FÜL */
+        /* SZKENNER SPECIFIKUS */
+        #scanner { background: black; }
         #reader {
             width: 100% !important;
             height: 100% !important;
             border: none !important;
-            background: black;
         }
         #reader video {
             object-fit: cover !important;
@@ -78,41 +85,26 @@
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 260px; height: 160px;
-            border: 2px solid rgba(255,255,255,0.6);
+            border: 2px solid rgba(255,255,255,0.7);
             border-radius: 15px;
-            box-shadow: 0 0 0 5000px rgba(0,0,0,0.4);
+            box-shadow: 0 0 0 5000px rgba(0,0,0,0.5);
             pointer-events: none;
             z-index: 5;
         }
-        .scan-overlay::after {
-            content: "";
-            position: absolute;
-            top: 50%; left: 5%; right: 5%;
-            height: 2px; background: #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-            animation: scan-line 2.5s infinite linear;
-        }
-        @keyframes scan-line {
-            0% { top: 5%; opacity: 0; }
-            50% { top: 50%; opacity: 1; }
-            100% { top: 95%; opacity: 0; }
-        }
 
-        /* JAVÍTOTT ZSEBLÁMPA GOMB - Magasabbra téve, hogy ne lógjon ki */
+        /* ZSEBLÁMPA - Biztonságos pozíció */
         #torch-btn {
             position: absolute;
-            bottom: 40px; 
+            bottom: 30px; 
             left: 50%;
             transform: translateX(-50%);
-            width: 65px; height: 65px;
+            width: 60px; height: 60px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255,255,255,0.8);
-            color: white; font-size: 28px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid white;
+            color: white; font-size: 24px;
             display: none; align-items: center; justify-content: center;
             z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         /* DRAWER (ALSÓ PANEL) */
@@ -121,46 +113,35 @@
             bottom: -100%;
             left: 0; right: 0;
             background: white;
-            border-radius: 24px 24px 0 0;
-            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
-            transition: bottom 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px calc(25px + env(safe-area-inset-bottom));
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            transition: bottom 0.3s ease-out;
             z-index: 2000;
         }
         #drawer.open { bottom: 0; }
-        .drawer-handle {
-            width: 45px; height: 5px; background: #e0e0e0;
-            border-radius: 10px; margin: 0 auto 20px;
-        }
+        .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 10px; margin: 0 auto 15px; }
 
-        /* LISTA KÁRTYÁK */
-        .inventory-list { padding: 15px 15px 100px 15px; }
+        /* LISTA ÉS BEÁLLÍTÁSOK GÖRDÍTÉSE */
+        #list, #settings { overflow-y: auto; }
+        .inventory-list { padding: 10px 15px 100px 15px; }
         .item-card {
-            background: white; padding: 16px;
-            border-radius: 12px; margin-bottom: 12px;
+            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
-            border-left: 5px solid var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* GOMBOK ÉS INPUTOK */
-        .btn { padding: 12px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
+        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
         .btn-primary { background: var(--primary); }
         .btn-dark { background: var(--dark); }
         .btn-danger { background: var(--danger); }
-        .qty-input { width: 70px; padding: 12px; font-size: 20px; text-align: center; border: 2px solid #eee; border-radius: 8px; font-weight: bold; }
-        
-        .list-header {
-            padding: 15px; display: flex; gap: 10px;
-            position: sticky; top: 0; background: var(--bg); z-index: 50;
-        }
+        .qty-input { width: 65px; padding: 10px; font-size: 20px; text-align: center; border: 1px solid #ccc; border-radius: 8px; }
     </style>
 </head>
 <body>
 
     <nav>
-        <button class="tab-btn active" onclick="showTab('scanner', this)"><span>📷</span>Szkenner</button>
+        <button class="tab-btn active" onclick="showTab('scanner', this)"><span>📷</span>Szkener</button>
         <button class="tab-btn" onclick="showTab('list', this)"><span>📋</span>Lista</button>
         <button class="tab-btn" onclick="showTab('settings', this)"><span>⚙️</span>Beállítások</button>
     </nav>
@@ -172,20 +153,17 @@
     </div>
 
     <div id="list" class="content-area">
-        <div class="list-header">
-            <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">💾 Mentés (Excel)</button>
-            <button class="btn btn-danger" onclick="askClearAll()">🗑️ Törlés</button>
+        <div style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10;">
+            <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">💾 Excel Mentés</button>
+            <button class="btn btn-danger" onclick="askClearAll()">🗑️ Mind töröl</button>
         </div>
         <div id="inventory-container" class="inventory-list"></div>
     </div>
 
     <div id="settings" class="content-area" style="padding: 20px;">
-        <h3 style="margin-top:0">Kamera beállítások</h3>
-        <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <label>🔍 Zoom szint:</label>
-                <b id="zoom-val">2.0x</b>
-            </div>
+        <h3>Beállítások</h3>
+        <div style="background: white; padding: 20px; border-radius: 15px;">
+            <label>🔍 Alapértelmezett Zoom: <b id="zoom-label">2.0x</b></label><br><br>
             <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2" style="width:100%" oninput="applyZoom(this.value)">
         </div>
     </div>
@@ -193,18 +171,14 @@
     <div id="drawer">
         <div class="drawer-handle"></div>
         <div style="text-align: center;">
-            <div id="drawer-code" style="font-size: 1.3rem; font-weight: 900; color: var(--dark); margin-bottom: 5px;">---</div>
-            <div id="drawer-info" style="color: #888; margin-bottom: 25px;">Készleten: 0 db</div>
-            
-            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: center;">
-                    <button class="btn btn-dark" style="flex:1; max-width: 120px;" onclick="addFromDrawer(1)">+1 darab</button>
-                    <span style="font-weight: bold; color: #ccc;">VAGY</span>
-                    <input type="number" id="drawer-qty" class="qty-input" value="1" onclick="this.select()">
-                    <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
-                </div>
-                <button class="btn" style="color: #bbb; background: none;" onclick="closeDrawer()">Mégse</button>
+            <div id="drawer-code" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 5px;">---</div>
+            <div id="drawer-info" style="color: #888; margin-bottom: 20px;">Készleten: 0 db</div>
+            <div style="display: flex; align-items: center; gap: 10px; justify-content: center; width:100%;">
+                <button class="btn btn-dark" style="flex:1" onclick="addFromDrawer(1)">+1 db</button>
+                <input type="number" id="drawer-qty" class="qty-input" value="1">
+                <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
             </div>
+            <button class="btn" style="color: #999; background:none; margin-top:10px;" onclick="closeDrawer()">Mégse</button>
         </div>
     </div>
 
@@ -216,7 +190,6 @@
         let lastScannedCode = "";
         let audioCtx;
 
-        // --- NAVIGÁCIÓ ---
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -225,33 +198,36 @@
             closeDrawer();
         }
 
-        // --- SZKENNER ---
+        // --- KAMERA INDÍTÁS FIX (HÁTSÓ KAMERA KÉNYSZERÍTÉSE) ---
         function startScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => doStart()).catch(() => doStart());
+            } else { doStart(); }
+        }
+
+        function doStart() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { 
-                fps: 20, 
-                qrbox: { width: 260, height: 160 }, 
-                aspectRatio: 1.0,
-                videoConstraints: { focusMode: "continuous" }
-            };
-            
-            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                if (isScanningPaused) return;
-                onScanSuccess(decodedText);
-            }).then(() => {
-                setupCameraExtras();
-            }).catch(err => console.error("Kamera hiba:", err));
+            // facingMode: "environment" = Hátsó kamera
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 20, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 },
+                (text) => { if (!isScanningPaused) onScanSuccess(text); }
+            ).then(() => {
+                setupExtras();
+            }).catch(err => {
+                console.error(err);
+                // Ha hiba van, megpróbáljuk kényszerítés nélkül
+                html5QrCode.start({ facingMode: "environment" }, { fps:10 }, (text) => onScanSuccess(text));
+            });
         }
 
         function onScanSuccess(code) {
             isScanningPaused = true;
             lastScannedCode = code;
             playBeep();
-
             document.getElementById('drawer-code').innerText = code;
-            document.getElementById('drawer-info').innerText = "Jelenleg a listában: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
             document.getElementById('drawer-qty').value = 1;
-            
             document.getElementById('drawer').classList.add('open');
         }
 
@@ -263,131 +239,87 @@
         function addFromDrawer(val) {
             const qty = parseInt(val);
             if (qty > 0) {
-                if (inventoryData[lastScannedCode]) inventoryData[lastScannedCode] += qty;
-                else inventoryData[lastScannedCode] = qty;
-                
-                updateListUI();
-                saveData();
-                closeDrawer();
+                inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + qty;
+                updateUI(); saveData(); closeDrawer();
             }
         }
 
-        // --- LISTA KEZELÉS ---
-        function updateListUI() {
+        function updateUI() {
             const container = document.getElementById('inventory-container');
             container.innerHTML = "";
-            const keys = Object.keys(inventoryData).reverse();
-            
-            if (keys.length === 0) {
-                container.innerHTML = "<div style='text-align:center; color:#bbb; margin-top:50px;'>Üres a lista...</div>";
-                return;
-            }
-
-            keys.forEach(code => {
+            Object.keys(inventoryData).reverse().forEach(code => {
                 const card = document.createElement('div');
                 card.className = 'item-card';
                 card.innerHTML = `
-                    <div style="max-width: 60%;">
-                        <div style="font-size: 0.9rem; color: #888;">Vonalkód</div>
-                        <div style="font-weight:bold; word-break: break-all;">${code}</div>
-                        <div style="color:var(--primary); font-size:1.3rem; font-weight: 900; margin-top:4px;">${inventoryData[code]} <small>db</small></div>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-dark" style="padding: 10px 15px;" onclick="modifyQty('${code}', -1)">-</button>
-                        <button class="btn btn-primary" style="padding: 10px 15px;" onclick="modifyQty('${code}', 1)">+</button>
-                        <button class="btn btn-danger" style="padding: 10px 15px;" onclick="deleteItem('${code}')">🗑️</button>
-                    </div>
-                `;
+                    <div><b>${code}</b><br><span style="color:var(--primary)">${inventoryData[code]} db</span></div>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn btn-dark" onclick="modQty('${code}', -1)">-</button>
+                        <button class="btn btn-primary" onclick="modQty('${code}', 1)">+</button>
+                        <button class="btn btn-danger" onclick="delItem('${code}')">🗑️</button>
+                    </div>`;
                 container.appendChild(card);
             });
         }
 
-        function modifyQty(code, change) {
-            inventoryData[code] += change;
-            if (inventoryData[code] <= 0) {
-                delete inventoryData[code];
-            }
-            updateListUI();
-            saveData();
+        function modQty(c, v) { 
+            inventoryData[c] += v; 
+            if(inventoryData[c] <= 0) delete inventoryData[c]; 
+            updateUI(); saveData(); 
         }
 
-        function deleteItem(code) {
-            if(confirm("Biztosan törlöd?")) {
-                delete inventoryData[code];
-                updateListUI();
-                saveData();
-            }
-        }
+        function delItem(c) { if(confirm("Törlöd?")) { delete inventoryData[c]; updateUI(); saveData(); } }
+        function askClearAll() { if(confirm("Mindent törölsz?")) { inventoryData = {}; updateUI(); saveData(); } }
 
-        function askClearAll() {
-            if(confirm("MINDEN adatot törölsz a listából?")) {
-                inventoryData = {};
-                updateListUI();
-                saveData();
-            }
-        }
-
-        // --- KAMERA EXTRÁK (ZOOM ÉS LÁMPA) ---
-        function setupCameraExtras() {
-            const v = document.querySelector("#reader video");
-            if (v && v.srcObject) {
-                videoTrack = v.srcObject.getVideoTracks()[0];
+        function setupExtras() {
+            const video = document.querySelector("#reader video");
+            if (video && video.srcObject) {
+                videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
-                
-                // 2.0x ALAPÉRTELMEZETT ZOOM ALKALMAZÁSA
                 if (caps.zoom) {
-                    let defaultZoom = 2.0;
-                    // Ha a kamera nem bírja a 2.0x-et, vegyük a maximumát
-                    if (defaultZoom > caps.zoom.max) defaultZoom = caps.zoom.max;
-                    
-                    const savedZoom = localStorage.getItem("inventory_zoom") || defaultZoom;
+                    const savedZoom = localStorage.getItem("leltar_zoom") || 2.0;
                     document.getElementById("zoom-slider").value = savedZoom;
                     applyZoom(savedZoom);
                 }
-
                 if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
             }
         }
 
-        function applyZoom(val) {
+        function applyZoom(v) {
             if (videoTrack) {
-                videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] });
-                document.getElementById("zoom-val").innerText = parseFloat(val).toFixed(1) + "x";
-                localStorage.setItem("inventory_zoom", val);
+                videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(v) }] });
+                document.getElementById("zoom-label").innerText = parseFloat(v).toFixed(1) + "x";
+                localStorage.setItem("leltar_zoom", v);
             }
         }
 
         function toggleTorch() {
             if (videoTrack) {
-                const current = videoTrack.getSettings().torch;
-                videoTrack.applyConstraints({ advanced: [{ torch: !current }] });
+                const cur = videoTrack.getSettings().torch;
+                videoTrack.applyConstraints({ advanced: [{ torch: !cur }] });
             }
         }
 
-        // --- HANG ÉS ADAT ---
         function playBeep() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const g = audioCtx.createGain();
             osc.connect(g); g.connect(audioCtx.destination);
-            osc.type = 'sine'; osc.frequency.value = 900; g.gain.value = 0.1;
+            osc.frequency.value = 850; g.gain.value = 0.1;
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function exportToExcel() {
-            if (Object.keys(inventoryData).length === 0) return alert("Nincs mit menteni!");
-            const data = Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Darabszám": inventoryData[k]}));
-            const ws = XLSX.utils.json_to_sheet(data);
+            if (Object.keys(inventoryData).length === 0) return alert("Nincs adat!");
+            const ws = XLSX.utils.json_to_sheet(Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Db": inventoryData[k]})));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leltár");
             XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        function saveData() { localStorage.setItem("inventory_v3_final", JSON.stringify(inventoryData)); }
+        function saveData() { localStorage.setItem("leltar_v4", JSON.stringify(inventoryData)); }
         function loadData() {
-            const saved = localStorage.getItem("inventory_v3_final");
-            if (saved) { inventoryData = JSON.parse(saved); updateListUI(); }
+            const saved = localStorage.getItem("leltar_v4");
+            if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
         }
 
         window.onload = () => { loadData(); startScanner(); };
