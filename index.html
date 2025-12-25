@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Leltár App Pro</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         :root {
             --primary: #2a9d8f;
@@ -16,12 +21,14 @@
             --bg: #f4f4f4;
         }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; padding: 0; 
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
             background: #000;
             height: 100dvh;
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
@@ -29,11 +36,12 @@
         nav {
             display: flex;
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             padding-top: env(safe-area-inset-top);
             height: calc(75px + env(safe-area-inset-top));
         }
+
         .tab-btn {
             flex: 1;
             padding: 10px 5px;
@@ -47,12 +55,16 @@
             justify-content: center;
             gap: 4px;
         }
+
         .tab-btn.active {
             color: var(--primary);
             border-bottom: 4px solid var(--primary);
             font-weight: bold;
         }
-        .tab-btn span { font-size: 24px; }
+
+        .tab-btn span {
+            font-size: 24px;
+        }
 
         /* TARTALOM */
         .content-area {
@@ -62,35 +74,57 @@
             background: var(--bg);
             overflow: hidden;
         }
-        .content-area.active { display: block; }
+
+        .content-area.active {
+            display: block;
+        }
 
         /* SZKENNER */
-        #scanner { background: #000; }
-        #reader { width: 100% !important; height: 100% !important; border: none !important; }
-        #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-        
+        #scanner {
+            background: #000;
+        }
+
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        #reader video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         .scan-overlay {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            width: 260px; height: 160px;
-            border: 2px solid rgba(255,255,255,0.8);
+            width: 260px;
+            height: 160px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 15px;
-            box-shadow: 0 0 0 5000px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.5);
             pointer-events: none;
             z-index: 5;
         }
 
         #torch-btn {
             position: absolute;
-            bottom: 40px; left: 50%;
+            bottom: 40px;
+            left: 50%;
             transform: translateX(-50%);
-            width: 60px; height: 60px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0, 0, 0, 0.6);
             border: 2px solid #fff;
-            color: #fff; font-size: 24px;
-            display: none; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
             z-index: 100;
         }
 
@@ -98,35 +132,87 @@
         #drawer {
             position: fixed;
             bottom: -100%;
-            left: 0; right: 0;
+            left: 0;
+            right: 0;
             background: white;
             border-radius: 20px 20px 0 0;
             padding: 20px 20px calc(30px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
             transition: bottom 0.3s cubic-bezier(0, 0, 0.2, 1);
             z-index: 2000;
         }
-        #drawer.open { bottom: 0; }
-        .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 10px; margin: 0 auto 15px; }
+
+        #drawer.open {
+            bottom: 0;
+        }
+
+        .drawer-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 10px;
+            margin: 0 auto 15px;
+        }
 
         /* LISTA ÉS KÁRTYÁK */
-        #list { overflow-y: auto; }
-        .inventory-list { padding: 10px 15px 100px 15px; }
+        #list {
+            overflow-y: auto;
+        }
+
+        .inventory-list {
+            padding: 10px 15px 100px 15px;
+        }
+
         .item-card {
-            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-left: 5px solid var(--primary);
         }
 
-        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; }
-        .btn:active { transform: scale(0.95); }
-        .btn-primary { background: var(--primary); }
-        .btn-dark { background: var(--dark); }
-        .btn-danger { background: var(--danger); }
-        .qty-input { width: 75px; padding: 10px; font-size: 22px; text-align: center; border: 1px solid #ccc; border-radius: 8px; font-weight: bold; }
+        .btn {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+        }
+
+        .btn-dark {
+            background: var(--dark);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .qty-input {
+            width: 75px;
+            padding: 10px;
+            font-size: 22px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
 
     <nav>
@@ -142,7 +228,8 @@
     </div>
 
     <div id="list" class="content-area">
-        <div style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid #eee;">
+        <div
+            style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid #eee;">
             <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">💾 Excel Mentés</button>
             <button class="btn btn-danger" onclick="askClearAll()">🗑️ Törlés</button>
         </div>
@@ -156,7 +243,8 @@
                 <label>🔍 Kamera Zoom:</label>
                 <b id="zoom-label">1.6x</b>
             </div>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1.6" style="width:100%" oninput="applyZoom(this.value)">
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1.6" style="width:100%"
+                oninput="applyZoom(this.value)">
             <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">
                 A program megjegyzi ezt a zoom szintet a következő indításig.
             </p>
@@ -166,14 +254,17 @@
     <div id="drawer">
         <div class="drawer-handle"></div>
         <div style="text-align: center;">
-            <div id="drawer-code" style="font-size: 1.4rem; font-weight: bold; color: var(--dark); margin-bottom: 5px;">---</div>
+            <div id="drawer-code" style="font-size: 1.4rem; font-weight: bold; color: var(--dark); margin-bottom: 5px;">
+                ---</div>
             <div id="drawer-info" style="color: #888; margin-bottom: 20px;">Készleten: 0 db</div>
             <div style="display: flex; align-items: center; gap: 12px; justify-content: center; width:100%;">
                 <button class="btn btn-dark" style="flex:1" onclick="addFromDrawer(1)">+1 darab</button>
                 <input type="number" id="drawer-qty" class="qty-input" value="1" onclick="this.select()">
-                <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
+                <button class="btn btn-primary"
+                    onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
             </div>
-            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;" onclick="closeDrawer()">Mégse</button>
+            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;"
+                onclick="closeDrawer()">Mégse</button>
         </div>
     </div>
 
@@ -202,16 +293,16 @@
         function initCam() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 20, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
-            
+
             html5QrCode.start(
-                { facingMode: { exact: "environment" } }, 
+                { facingMode: { exact: "environment" } },
                 config,
                 onScanSuccess
             ).then(() => setupExtras())
-            .catch(err => {
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-                .then(() => setupExtras());
-            });
+                .catch(err => {
+                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+                        .then(() => setupExtras());
+                });
         }
 
         function onScanSuccess(code) {
@@ -261,16 +352,16 @@
             });
         }
 
-        function modQty(c, v) { 
-            inventoryData[c] += v; 
-            if(inventoryData[c] <= 0) delete inventoryData[c]; 
-            updateUI(); saveData(); 
+        function modQty(c, v) {
+            inventoryData[c] += v;
+            if (inventoryData[c] <= 0) delete inventoryData[c];
+            updateUI(); saveData();
         }
 
-        function delItem(c) { if(confirm("Törlés?")) { delete inventoryData[c]; updateUI(); saveData(); } }
-        function askClearAll() { if(confirm("Minden adatot törölsz?")) { inventoryData = {}; updateUI(); saveData(); } }
+        function delItem(c) { if (confirm("Törlés?")) { delete inventoryData[c]; updateUI(); saveData(); } }
+        function askClearAll() { if (confirm("Minden adatot törölsz?")) { inventoryData = {}; updateUI(); saveData(); } }
 
-        function setupExtras() {
+        /*function setupExtras() {
             const video = document.querySelector("#reader video");
             if (video && video.srcObject) {
                 videoTrack = video.srcObject.getVideoTracks()[0];
@@ -284,7 +375,7 @@
                 }
                 if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
             }
-        }
+        }*/
 
         function applyZoom(v) {
             if (videoTrack) {
@@ -312,11 +403,11 @@
 
         function exportToExcel() {
             if (Object.keys(inventoryData).length === 0) return alert("Nincs adat!");
-            const data = Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Mennyiség": inventoryData[k]}));
+            const data = Object.keys(inventoryData).map(k => ({ "Vonalkód": k, "Mennyiség": inventoryData[k] }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         function saveData() { localStorage.setItem("inventory_v6", JSON.stringify(inventoryData)); }
@@ -325,7 +416,47 @@
             if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
         }
 
+
+        // Figyeljük, amikor a felhasználó visszatér az oldalra (pl. képernyőzár feloldása után)
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'visible') {
+                console.log("Felhasználó visszatért, kamera ellenőrzése...");
+
+                // Ha a szkenner éppen aktív fülön van, indítsuk újra a biztonság kedvéért
+                const scannerTab = document.getElementById('scanner');
+                if (scannerTab && scannerTab.classList.contains('active')) {
+                    // Rövid késleltetés, hogy a böngészőnek legyen ideje felébredni
+                    setTimeout(() => {
+                        startScanner();
+                    }, 500);
+                }
+            }
+        });
+
+        // Extra hibafigyelő a videó sávhoz
+        function setupExtras() {
+            const video = document.querySelector("#reader video");
+            if (video && video.srcObject) {
+                videoTrack = video.srcObject.getVideoTracks()[0];
+
+                // Ha a videósáv valamilyen külső okból leáll (pl. rendszer hívás, lezárás)
+                videoTrack.onended = () => {
+                    console.warn("A videósáv megszakadt, újraindítás...");
+                    if (!isScanningPaused) startScanner();
+                };
+
+                const caps = videoTrack.getCapabilities();
+                if (caps.zoom) {
+                    const savedZoom = localStorage.getItem("app_zoom") || 1.6;
+                    applyZoom(savedZoom);
+                    document.getElementById("zoom-slider").value = savedZoom;
+                }
+                if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
+            }
+        }
+
         window.onload = () => { loadData(); startScanner(); };
     </script>
 </body>
+
 </html>
