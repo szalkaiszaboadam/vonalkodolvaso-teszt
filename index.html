@@ -25,7 +25,6 @@
             overflow: hidden;
         }
 
-        /* FELSŐ NAVIGÁCIÓ */
         nav {
             display: flex;
             background: white;
@@ -54,7 +53,6 @@
         }
         .tab-btn span { font-size: 24px; }
 
-        /* TARTALOM */
         .content-area {
             flex: 1;
             position: relative;
@@ -64,7 +62,6 @@
         }
         .content-area.active { display: block; }
 
-        /* SZKENNER */
         #scanner { background: #000; }
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
@@ -94,7 +91,15 @@
             z-index: 100;
         }
 
-        /* DRAWER (ALSÓ PANEL) */
+        /* DRAWER & BACKDROP */
+        #backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1500;
+        }
+
         #drawer {
             position: fixed;
             bottom: -100%;
@@ -107,10 +112,10 @@
             z-index: 2000;
         }
         #drawer.open { bottom: 0; }
+        #backdrop.active { display: block; }
+        
         .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 10px; margin: 0 auto 15px; }
 
-        /* LISTA ÉS KÁRTYÁK */
-        #list { overflow-y: auto; }
         .inventory-list { padding: 10px 15px 100px 15px; }
         .item-card {
             background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
@@ -154,15 +159,13 @@
         <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                 <label>🔍 Kamera Zoom:</label>
-                <b id="zoom-label">1.6x</b>
+                <b id="zoom-label">2.0x</b>
             </div>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1.6" style="width:100%" oninput="applyZoom(this.value)">
-            <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">
-                A program megjegyzi ezt a zoom szintet a következő indításig.
-            </p>
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2.0" style="width:100%" oninput="applyZoom(this.value)">
         </div>
     </div>
 
+    <div id="backdrop" onclick="closeDrawer(false)"></div>
     <div id="drawer">
         <div class="drawer-handle"></div>
         <div style="text-align: center;">
@@ -170,10 +173,12 @@
             <div id="drawer-info" style="color: #888; margin-bottom: 20px;">Készleten: 0 db</div>
             <div style="display: flex; align-items: center; gap: 12px; justify-content: center; width:100%;">
                 <button class="btn btn-dark" style="flex:1" onclick="addFromDrawer(1)">+1 darab</button>
-                <input type="number" id="drawer-qty" class="qty-input" value="1" onclick="this.select()">
+                <input type="number" id="drawer-qty" class="qty-input" value="1" 
+                       onfocus="cancelAutoClose()" 
+                       onclick="this.select()">
                 <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
             </div>
-            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;" onclick="closeDrawer()">Mégse</button>
+            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;" onclick="closeDrawer(false)">Mégse (Kilépés mentés nélkül)</button>
         </div>
     </div>
 
@@ -184,19 +189,14 @@
         let isScanningPaused = false;
         let lastScannedCode = "";
         let audioCtx;
+        let autoCloseTimeout = null;
 
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
-            closeDrawer();
-        }
-
-        function startScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => initCam()).catch(() => initCam());
-            } else { initCam(); }
+            closeDrawer(false);
         }
 
         function initCam() {
@@ -223,20 +223,47 @@
             document.getElementById('drawer-code').innerText = code;
             document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
             document.getElementById('drawer-qty').value = 1;
+            
+            // Drawer nyitás
             document.getElementById('drawer').classList.add('open');
+            document.getElementById('backdrop').classList.add('active');
+
+            // Automatikus mentés és bezárás 3mp múlva
+            startAutoClose();
         }
 
-        function closeDrawer() {
+        function startAutoClose() {
+            cancelAutoClose();
+            autoCloseTimeout = setTimeout(() => {
+                addFromDrawer(document.getElementById('drawer-qty').value);
+            }, 3000);
+        }
+
+        function cancelAutoClose() {
+            if (autoCloseTimeout) {
+                clearTimeout(autoCloseTimeout);
+                autoCloseTimeout = null;
+            }
+        }
+
+        function closeDrawer(save = true) {
+            cancelAutoClose();
             document.getElementById('drawer').classList.remove('open');
-            setTimeout(() => { isScanningPaused = false; }, 400);
+            document.getElementById('backdrop').classList.remove('active');
+            
+            // Rövid késleltetés, hogy a fizikai animáció lefusson mielőtt újra engedjük a szkennert
+            setTimeout(() => { 
+                isScanningPaused = false; 
+            }, 400);
         }
 
         function addFromDrawer(val) {
             const qty = parseInt(val);
             if (qty > 0) {
                 inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + qty;
-                updateUI(); saveData(); closeDrawer();
+                updateUI(); saveData();
             }
+            closeDrawer(true);
         }
 
         function updateUI() {
@@ -276,12 +303,11 @@
                 videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
                 
-                if (caps.zoom) {
-                    // FALLBACK MÓDOSÍTVA 1.6-RA
-                    const savedZoom = localStorage.getItem("app_zoom") || 1.6;
-                    applyZoom(savedZoom);
-                    document.getElementById("zoom-slider").value = savedZoom;
-                }
+                // ALAPÉRTELMEZETT ZOOM: 2.0
+                const savedZoom = localStorage.getItem("app_zoom") || 2.0;
+                applyZoom(savedZoom);
+                document.getElementById("zoom-slider").value = savedZoom;
+                
                 if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
             }
         }
@@ -325,7 +351,7 @@
             if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
         }
 
-        window.onload = () => { loadData(); startScanner(); };
+        window.onload = () => { loadData(); initCam(); };
     </script>
 </body>
 </html>
