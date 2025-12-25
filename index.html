@@ -3,377 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VONALKÓDOLVASÓ</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    
+    <title>Leltár App</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f4f4f4; margin: 0; padding: 10px; }
-        h2 { color: #333; margin: 5px 0 10px 0; font-size: 1.2rem; }
-
-        /* KAMERA KERET - Visszaállítva az eredeti tökéletes állapotra */
-        #reader {
-            width: 100%;
-            max-width: 500px;
-            height: 250px;
-            margin: 0 auto 10px auto;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            position: relative;
+        :root {
+            --primary: #2a9d8f;
+            --dark: #264653;
+            --danger: #e76f51;
+            --bg: #f4f4f4;
         }
-        /* EZ HIÁNYZOTT: A videó kitöltése */
-        #reader video { object-fit: cover; width: 100%; height: 100%; }
 
-        /* Várakozás jelzése (elhalványítás) */
-        .scanner-paused video { opacity: 0.4; filter: blur(2px); }
-        .pause-overlay {
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; padding: 0; 
+            background: var(--bg); 
+            height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* FELSŐ NAVIGÁCIÓ */
+        nav {
+            display: flex;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 15px 5px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+        }
+        .tab-btn span { font-size: 20px; }
+
+        /* TARTALOM TERÜLETEK */
+        .content-area {
+            flex: 1;
+            position: relative;
             display: none;
+            overflow-y: auto;
+        }
+        .content-area.active { display: block; }
+
+        /* SZKENNER FÜL */
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+        #reader video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* Egyedi célkereszt */
+        .scan-overlay {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
+            width: 250px; height: 150px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 15px;
+            box-shadow: 0 0 0 5000px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 5;
+        }
+        .scan-overlay::after {
+            content: "";
+            position: absolute;
+            top: 50%; left: 10%; right: 10%;
+            height: 2px; background: red;
+            box-shadow: 0 0 8px red;
+            animation: scan-line 2s infinite;
+        }
+        @keyframes scan-line {
+            0%, 100% { top: 10%; }
+            50% { top: 90%; }
+        }
+
+        /* Zseblámpa gomb alul */
+        #torch-btn {
+            position: absolute;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid white;
+            color: white; font-size: 30px;
+            display: none; align-items: center; justify-content: center;
             z-index: 10;
         }
-        .scanner-paused .pause-overlay { display: block; }
 
-        /* VEZÉRLŐK */
-        .controls { 
-            background: white; padding: 10px; border-radius: 10px; 
-            max-width: 500px; margin: 0 auto 15px auto; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        /* DRAWER (ALSÓ PANEL) */
+        #drawer {
+            position: fixed;
+            bottom: -100%;
+            left: 0; right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 200;
         }
-        .manual-input-group { display: flex; gap: 5px; margin-bottom: 10px; }
-        .manual-input-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        button { padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 14px; }
-        .btn-add { background-color: #2a9d8f; }
-        
-        .btn-group { display: flex; gap: 8px; margin-top: 10px; justify-content: space-between; }
-        .btn-group button { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 24px; padding: 12px 0; }
-
-        #clear-btn { background-color: #e76f51; }
-        #export-btn { background-color: #264653; }
-        #torch-btn { background-color: #e9c46a; color: #333; display: none; }
-        #cam-restart-btn { background-color: #457b9d; }
-
-        #zoom-container { display: none; width: 95%; margin: 0 auto 10px auto; }
-        .bulk-toggle-container { display: flex; align-items: center; justify-content: center; padding: 8px; background: #eee; border-radius: 8px; margin-bottom: 5px; }
-        .bulk-toggle-container input { margin-right: 10px; transform: scale(1.3); }
-        .bulk-active { background-color: #ffe8d6; border: 1px solid #e76f51; color: #e76f51; }
-
-        /* MODAL */
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; }
-        .modal-box { background: white; padding: 20px; border-radius: 10px; width: 85%; max-width: 320px; text-align: center; }
-        .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
-        #modal-qty-input { font-size: 20px; padding: 10px; width: 80px; text-align: center; margin: 10px 0; display: none; border: 2px solid #2a9d8f; border-radius: 5px; }
-
-        /* TÁBLÁZAT OPTIMALIZÁLVA */
-        .table-container { width: 100%; max-width: 600px; margin: 0 auto; overflow-x: auto; background: white; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #2a9d8f; color: white; font-size: 0.8rem; }
-        
-        .row-updated { animation: highlight-fade 1.5s ease-out; }
-        @keyframes highlight-fade {
-            0% { background-color: #d4edda; }
-            100% { background-color: transparent; }
+        #drawer.open { bottom: 0; }
+        .drawer-handle {
+            width: 40px; height: 5px; background: #ddd;
+            border-radius: 10px; margin: 0 auto 15px;
         }
 
-        .qty-col { font-weight: bold; text-align: center; width: 40px; }
-        .btn-mini { width: 32px; height: 32px; border-radius: 50%; border: none; color: white; font-size: 20px; font-weight: bold; margin-left: 4px; display: inline-flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s; }
-        .btn-mini:active { transform: scale(0.9); }
-        .btn-minus { background-color: #2a9d8f; }
-        .btn-plus { background-color: #d62828; }
-        .btn-delete { background-color: #6c757d; }
+        /* LISTA FÜL */
+        .list-controls {
+            padding: 15px;
+            display: flex; gap: 10px;
+            position: sticky; top: 0; background: var(--bg);
+        }
+        .inventory-list { padding: 0 15px 80px 15px; }
+        .item-card {
+            background: white; padding: 15px;
+            border-radius: 10px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* FORMÁZÁS */
+        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        .btn-primary { background: var(--primary); }
+        .btn-dark { background: var(--dark); }
+        .btn-danger { background: var(--danger); }
+        .qty-input { width: 60px; padding: 10px; font-size: 18px; text-align: center; border: 1px solid #ccc; border-radius: 5px; }
+        
     </style>
 </head>
 <body>
 
-    <h2>VONALKÓDOLVASÓ</h2>
-    
-    <div id="reader">
-        <div class="pause-overlay">VÁRAKOZÁS...</div>
+    <nav>
+        <button class="tab-btn active" onclick="showTab('scanner')"><span>📷</span>Szkener</button>
+        <button class="tab-btn" onclick="showTab('list')"><span>📋</span>Lista</button>
+        <button class="tab-btn" onclick="showTab('settings')"><span>⚙️</span>Beállítások</button>
+    </nav>
+
+    <div id="scanner" class="content-area active">
+        <div id="reader"></div>
+        <div class="scan-overlay"></div>
+        <button id="torch-btn" onclick="toggleTorch()">🔦</button>
     </div>
 
-    <div class="controls">
-        <div class="manual-input-group">
-            <input type="number" id="manual-input" placeholder="Kézi kód..." onkeydown="checkEnter(event)">
-            <button class="btn-add" onclick="addManualCode()">OK</button>
+    <div id="list" class="content-area">
+        <div class="list-controls">
+            <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">💾 Excel Mentés</button>
+            <button class="btn btn-danger" onclick="askClearAll()">🗑️ Törlés</button>
         </div>
+        <div id="inventory-container" class="inventory-list">
+            </div>
+    </div>
 
-        <div id="zoom-container">
-            <label>🔍 Zoom:</label>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1" oninput="applyZoom(this.value)">
-        </div>
-
-        <div class="bulk-toggle-container" id="bulk-box">
-            <input type="checkbox" id="bulk-mode" onchange="toggleBulkUI()">
-            <label for="bulk-mode">Tömeges mód (Mennyiség kérése)</label>
-        </div>
-
-        <div class="btn-group">
-            <button id="cam-restart-btn" onclick="playClick(); restartCamera()">📷</button>
-            <button id="torch-btn" onclick="playClick(); toggleTorch()">🔦</button>
-            <button id="clear-btn" onclick="playClick(); askClearAll()">🗑️</button>
-            <button id="export-btn" onclick="playClick(); exportToExcel()">💾</button>
+    <div id="settings" class="content-area" style="padding: 20px;">
+        <h3>Beállítások</h3>
+        <div style="background: white; padding: 20px; border-radius: 15px;">
+            <label>🔍 Kamera Zoom:</label><br><br>
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1" style="width:100%" oninput="applyZoom(this.value)">
         </div>
     </div>
 
-    <div class="table-container">
-        <table id="inventory-table">
-            <thead>
-                <tr>
-                    <th>Kód</th>
-                    <th class="qty-col">Db</th>
-                    <th style="text-align:right">Művelet</th> 
-                </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-        </table>
-    </div>
-
-    <div id="overlay">
-        <div class="modal-box">
-            <div id="modal-text" style="font-weight:bold; margin-bottom:10px;">Üzenet</div>
-            <input type="number" id="modal-qty-input" value="1" min="1">
-            <div class="modal-btns">
-                <button onclick="playClick(); closeModal(false)" style="background:#666;">Mégse</button>
-                <button id="modal-confirm-btn" onclick="playClick(); closeModal(true)" style="background:#2a9d8f;">OK</button>
+    <div id="drawer">
+        <div class="drawer-handle"></div>
+        <div style="text-align: center;">
+            <div id="drawer-code" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 5px;">KÓD: ---</div>
+            <div id="drawer-info" style="color: #666; margin-bottom: 20px;">Jelenleg: 0 db</div>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="btn btn-dark" onclick="addFromDrawer(1)">+1 Hozzáad</button>
+                    <span style="font-weight: bold;">VAGY</span>
+                    <input type="number" id="drawer-qty" class="qty-input" value="1">
+                    <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
+                </div>
+                <button class="btn" style="color: #999;" onclick="closeDrawer()">Mégse</button>
             </div>
         </div>
     </div>
 
     <script>
         let html5QrCode;
-        let isTorchOn = false;
-        let videoTrack; 
-        let inventoryData = {}; 
-        let audioCtx;
+        let videoTrack;
+        let inventoryData = {};
         let isScanningPaused = false;
-        let currentAction = null; 
-        let tempCode = "";
+        let lastScannedCode = "";
+        let audioCtx;
 
-        // --- ADATKEZELÉS ---
-        function saveData() { localStorage.setItem("leltar_adatok", JSON.stringify(inventoryData)); }
+        // --- NAVIGÁCIÓ ---
+        function showTab(tabId) {
+            document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
 
-        function loadData() {
-            const saved = localStorage.getItem("leltar_adatok");
-            if (saved) {
-                try {
-                    inventoryData = JSON.parse(saved);
-                    const tbody = document.getElementById("table-body");
-                    tbody.innerHTML = "";
-                    Object.keys(inventoryData).reverse().forEach(code => renderRow(code, false));
-                } catch (e) { console.error("Hiba", e); }
+            if (tabId === 'scanner') {
+                if (html5QrCode && html5QrCode.getState() !== 2) startScanner();
+            } else {
+                // Nem állítjuk le a kamerát, csak szüneteltetjük, ha szükséges
             }
-            if (localStorage.getItem("leltar_bulk_mode") === "true") {
-                document.getElementById("bulk-mode").checked = true;
-                toggleBulkUI(); 
-            }
-        }
-
-        // --- HANGOK ---
-        function playBeep() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.1;
-            osc.start(); setTimeout(() => osc.stop(), 150);
-        }
-
-        function playClick() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05); 
         }
 
         // --- SZKENNER ---
-// A startScanner függvényt kicsit okosabbra cseréltük
-function startScanner() {
-    if (html5QrCode && html5QrCode.getState() === 2) { 
-        // Ha már fut (SCANNING állapot), nem indítjuk újra
-        return; 
-    }
-    initCamera();
-}
-
-        function initCamera() {
+        function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { 
-                fps: 15, 
-                qrbox: { width: 250, height: 150 },
-                videoConstraints: { facingMode: "environment" }
-            };
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-            .then(() => setupCameraControls())
-            .catch(err => alert("Kamera hiba: Engedélyezd a hozzáférést!"));
+            const config = { fps: 20, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                if (isScanningPaused) return;
+                onScanSuccess(decodedText);
+            }).then(() => {
+                setupCameraExtras();
+            }).catch(err => console.error(err));
         }
 
-        function onScanSuccess(decodedText) {
-            if (isScanningPaused) return;
-            const code = decodedText.trim();
-            if(!code) return;
-
-            pauseScanner(true);
+        function onScanSuccess(code) {
+            isScanningPaused = true;
+            lastScannedCode = code;
             playBeep();
 
-            if (document.getElementById("bulk-mode").checked) {
-                openModal('bulk-add', code);
-            } else {
-                addQuantity(code, 1);
-                setTimeout(() => pauseScanner(false), 1500); 
+            // Drawer kitöltése
+            document.getElementById('drawer-code').innerText = "KÓD: " + code;
+            document.getElementById('drawer-info').innerText = "Jelenleg a listában: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-qty').value = 1;
+            
+            document.getElementById('drawer').classList.add('open');
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            setTimeout(() => { isScanningPaused = false; }, 500);
+        }
+
+        function addFromDrawer(val) {
+            const qty = parseInt(val);
+            if (qty > 0) {
+                if (inventoryData[lastScannedCode]) inventoryData[lastScannedCode] += qty;
+                else inventoryData[lastScannedCode] = qty;
+                
+                updateListUI();
+                saveData();
+                closeDrawer();
             }
         }
 
-        function pauseScanner(paused) {
-            isScanningPaused = paused;
-            const reader = document.getElementById("reader");
-            paused ? reader.classList.add("scanner-paused") : reader.classList.remove("scanner-paused");
-        }
-
-        function restartCamera() { startScanner(); }
-
-        // --- TÁBLÁZAT ---
-        function renderRow(code, isNewAction) {
-            const tbody = document.getElementById("table-body");
-            let row = document.getElementById("row-" + code);
-            if (!row) {
-                row = document.createElement("tr");
-                row.id = "row-" + code;
-                tbody.insertBefore(row, tbody.firstChild);
-            }
-            row.innerHTML = `
-                <td>${code}</td>
-                <td class="qty-col">${inventoryData[code]}</td>
-                <td style="text-align:right; white-space:nowrap;">
-                    <button class="btn-mini btn-minus" onclick="modifyQty('${code}', -1)">-</button>
-                    <button class="btn-mini btn-plus" onclick="modifyQty('${code}', 1)">+</button>
-                    <button class="btn-mini btn-delete" onclick="askDeleteRow('${code}')">🗑️</button>
-                </td>`;
-            if (isNewAction) {
-                row.classList.remove("row-updated");
-                void row.offsetWidth;
-                row.classList.add("row-updated");
-            }
-        }
-
-        function addQuantity(code, amount) {
-            if (inventoryData[code]) inventoryData[code] += amount;
-            else inventoryData[code] = amount;
-            renderRow(code, true);
-            saveData();
+        // --- TÁBLÁZAT/LISTA HELYETT KÁRTYÁK ---
+        function updateListUI() {
+            const container = document.getElementById('inventory-container');
+            container.innerHTML = "";
+            
+            Object.keys(inventoryData).reverse().forEach(code => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    <div>
+                        <div style="font-weight:bold">${code}</div>
+                        <div style="color:var(--primary); font-size:1.2rem">${inventoryData[code]} db</div>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn btn-dark" onclick="modifyQty('${code}', -1)">-</button>
+                        <button class="btn btn-primary" onclick="modifyQty('${code}', 1)">+</button>
+                        <button class="btn btn-danger" onclick="deleteItem('${code}')">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         function modifyQty(code, change) {
-            if (inventoryData[code]) {
-                inventoryData[code] += change;
-                if (inventoryData[code] <= 0) askDeleteRow(code);
-                else { renderRow(code, true); saveData(); }
+            inventoryData[code] += change;
+            if (inventoryData[code] <= 0) delete inventoryData[code];
+            updateListUI();
+            saveData();
+        }
+
+        function deleteItem(code) {
+            if(confirm("Törlöd ezt a vonalkódot?")) {
+                delete inventoryData[code];
+                updateListUI();
+                saveData();
             }
         }
 
-        // --- EXPORT DÁTUMMAL ---
+        // --- EXTRÁK ---
+        function setupCameraExtras() {
+            const v = document.querySelector("#reader video");
+            if (v && v.srcObject) {
+                videoTrack = v.srcObject.getVideoTracks()[0];
+                const caps = videoTrack.getCapabilities();
+                if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
+            }
+        }
+
+        function toggleTorch() {
+            if (videoTrack) {
+                const current = videoTrack.getSettings().torch;
+                videoTrack.applyConstraints({ advanced: [{ torch: !current }] });
+            }
+        }
+
+        function applyZoom(val) {
+            if (videoTrack) videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] });
+        }
+
+        function playBeep() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = 800; gain.gain.value = 0.1;
+            osc.start(); setTimeout(() => osc.stop(), 150);
+        }
+
         function exportToExcel() {
-            if (Object.keys(inventoryData).length === 0) { alert("Nincs adat!"); return; }
-            const dataToExport = Object.keys(inventoryData).map(code => ({
-                "Vonalkód": code, "Darabszám": inventoryData[code]
-            }));
-            const d = new Date();
-            const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            if (Object.keys(inventoryData).length === 0) return alert("Üres a lista!");
+            const ws = XLSX.utils.json_to_sheet(Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Darab": inventoryData[k]})));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-            XLSX.writeFile(wb, `leltar_${dateStr}.xlsx`);
+            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        // --- MODAL ---
-        function openModal(action, code = "") {
-            currentAction = action; tempCode = code;
-            document.getElementById("overlay").style.display = "flex";
-            const input = document.getElementById("modal-qty-input");
-            input.style.display = (action === 'bulk-add') ? "block" : "none";
-            if(action === 'bulk-add') {
-                document.getElementById("modal-text").innerHTML = `Kód: <b>${code}</b><br>Mennyiség?`;
-                input.value = 1; input.focus();
-            } else {
-                document.getElementById("modal-text").innerHTML = action === 'clear-all' ? "Minden adat törlése?" : `Törlöd ezt: ${code}?`;
-            }
+        function saveData() { localStorage.setItem("inventory_v3", JSON.stringify(inventoryData)); }
+        function loadData() {
+            const saved = localStorage.getItem("inventory_v3");
+            if (saved) { inventoryData = JSON.parse(saved); updateListUI(); }
         }
 
-        function closeModal(isConfirmed) {
-            document.getElementById("overlay").style.display = "none";
-            if (isConfirmed) {
-                if (currentAction === 'bulk-add') {
-                    const qty = parseInt(document.getElementById("modal-qty-input").value);
-                    if (qty > 0) addQuantity(tempCode, qty);
-                } else if (currentAction === 'delete-one') {
-                    delete inventoryData[tempCode];
-                    if(document.getElementById("row-" + tempCode)) document.getElementById("row-" + tempCode).remove();
-                    saveData();
-                } else if (currentAction === 'clear-all') {
-                    inventoryData = {}; document.getElementById("table-body").innerHTML = "";
-                    saveData();
-                }
-            }
-            setTimeout(() => pauseScanner(false), 500);
-        }
-
-        function addManualCode() {
-            const input = document.getElementById("manual-input");
-            const code = input.value.trim();
-            if (code) {
-                playBeep();
-                if (document.getElementById("bulk-mode").checked) openModal('bulk-add', code);
-                else addQuantity(code, 1);
-                input.value = "";
-            }
-        }
-
-        function askDeleteRow(code) { pauseScanner(true); openModal('delete-one', code); }
-        function askClearAll() { pauseScanner(true); openModal('clear-all'); }
-        function checkEnter(e) { if (e.key === "Enter") addManualCode(); }
-        function toggleBulkUI() { 
-            const chk = document.getElementById("bulk-mode");
-            chk.checked ? document.getElementById("bulk-box").classList.add("bulk-active") : document.getElementById("bulk-box").classList.remove("bulk-active");
-            localStorage.setItem("leltar_bulk_mode", chk.checked);
-        }
-
-        function setupCameraControls() {
-            setTimeout(() => {
-                const v = document.querySelector("#reader video");
-                if (v && v.srcObject) {
-                    videoTrack = v.srcObject.getVideoTracks()[0];
-                    const caps = videoTrack.getCapabilities();
-                    if (caps.zoom) {
-                        document.getElementById("zoom-container").style.display = "block";
-                        const zs = document.getElementById("zoom-slider");
-                        zs.min = caps.zoom.min; zs.max = caps.zoom.max; zs.step = caps.zoom.step;
-                        let sz = localStorage.getItem("leltar_zoom") || 1;
-                        zs.value = sz; applyZoom(sz);
-                    }
-                    if (caps.torch) document.getElementById("torch-btn").style.display = "inline-block";
-                }
-            }, 800);
-        }
-
-        function applyZoom(val) { if (videoTrack) { videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(val) }] }); localStorage.setItem("leltar_zoom", val); } }
-        function toggleTorch() { if (videoTrack) { isTorchOn = !isTorchOn; videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }); } }
-
-        window.onload = function() { loadData(); startScanner(); };
+        window.onload = () => { loadData(); startScanner(); };
     </script>
 </body>
 </html>
