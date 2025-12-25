@@ -153,7 +153,7 @@
         <h3>Beállítások</h3>
         <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <label>🔍 Kamera Zoom: <b id="zoom-label">2.0x</b></label><br><br>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2" style="width:100%" oninput="applyZoom(this.value)">
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1.6" style="width:100%" oninput="applyZoom(this.value)">
         </div>
     </div>
 
@@ -278,7 +278,7 @@
                 
                 // ALAPÉRTELMEZETT 2.0x ZOOM BEÁLLÍTÁSA
                 if (caps.zoom) {
-                    const savedZoom = localStorage.getItem("app_zoom") || 2.0;
+                    const savedZoom = localStorage.getItem("app_zoom") || 1.6;
                     applyZoom(savedZoom);
                     document.getElementById("zoom-slider").value = savedZoom;
                 }
