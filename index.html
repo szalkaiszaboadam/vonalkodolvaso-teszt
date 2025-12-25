@@ -20,7 +20,6 @@
             font-family: 'Segoe UI', sans-serif; 
             margin: 0; padding: 0; 
             background: #000;
-            height: 100vh;
             height: 100dvh;
             display: flex; flex-direction: column;
             overflow: hidden;
@@ -95,7 +94,7 @@
             z-index: 100;
         }
 
-        /* DRAWER */
+        /* DRAWER (ALSÓ PANEL) */
         #drawer {
             position: fixed;
             bottom: -100%;
@@ -110,7 +109,7 @@
         #drawer.open { bottom: 0; }
         .drawer-handle { width: 40px; height: 4px; background: #ddd; border-radius: 10px; margin: 0 auto 15px; }
 
-        /* LISTA */
+        /* LISTA ÉS KÁRTYÁK */
         #list { overflow-y: auto; }
         .inventory-list { padding: 10px 15px 100px 15px; }
         .item-card {
@@ -120,11 +119,12 @@
             border-left: 5px solid var(--primary);
         }
 
-        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; }
+        .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); }
         .btn-dark { background: var(--dark); }
         .btn-danger { background: var(--danger); }
-        .qty-input { width: 70px; padding: 10px; font-size: 22px; text-align: center; border: 1px solid #ccc; border-radius: 8px; font-weight: bold; }
+        .qty-input { width: 75px; padding: 10px; font-size: 22px; text-align: center; border: 1px solid #ccc; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -150,10 +150,16 @@
     </div>
 
     <div id="settings" class="content-area" style="padding: 20px;">
-        <h3>Beállítások</h3>
+        <h3 style="margin-top:0">Beállítások</h3>
         <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <label>🔍 Kamera Zoom: <b id="zoom-label">2.0x</b></label><br><br>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <label>🔍 Kamera Zoom:</label>
+                <b id="zoom-label">1.6x</b>
+            </div>
             <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="1.6" style="width:100%" oninput="applyZoom(this.value)">
+            <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">
+                A program megjegyzi ezt a zoom szintet a következő indításig.
+            </p>
         </div>
     </div>
 
@@ -167,7 +173,7 @@
                 <input type="number" id="drawer-qty" class="qty-input" value="1" onclick="this.select()">
                 <button class="btn btn-primary" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">OK</button>
             </div>
-            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%;" onclick="closeDrawer()">Mégse</button>
+            <button class="btn" style="color: #aaa; background:none; margin-top:15px; width:100%; font-weight:normal;" onclick="closeDrawer()">Mégse</button>
         </div>
     </div>
 
@@ -195,20 +201,14 @@
 
         function initCam() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { 
-                fps: 20, 
-                qrbox: { width: 260, height: 160 }, 
-                aspectRatio: 1.0 
-            };
+            const config = { fps: 20, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
             
-            // Kifejezetten a hátsó kamerát kérjük
             html5QrCode.start(
                 { facingMode: { exact: "environment" } }, 
                 config,
                 onScanSuccess
             ).then(() => setupExtras())
             .catch(err => {
-                // Ha az 'exact' nem működik (pl. asztali gép), próbáljuk meg simán
                 html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
                 .then(() => setupExtras());
             });
@@ -244,7 +244,7 @@
             container.innerHTML = "";
             const keys = Object.keys(inventoryData).reverse();
             if (keys.length === 0) {
-                container.innerHTML = "<div style='text-align:center; color:#bbb; margin-top:50px;'>Üres lista</div>";
+                container.innerHTML = "<div style='text-align:center; color:#bbb; margin-top:50px;'>Üres lista...</div>";
                 return;
             }
             keys.forEach(code => {
@@ -253,9 +253,9 @@
                 card.innerHTML = `
                     <div><b style="font-size:1.1rem">${code}</b><br><span style="color:var(--primary); font-weight:bold;">${inventoryData[code]} db</span></div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-dark" onclick="modQty('${code}', -1)">-</button>
-                        <button class="btn btn-primary" onclick="modQty('${code}', 1)">+</button>
-                        <button class="btn btn-danger" onclick="delItem('${code}')">🗑️</button>
+                        <button class="btn btn-dark" style="padding:10px 15px;" onclick="modQty('${code}', -1)">-</button>
+                        <button class="btn btn-primary" style="padding:10px 15px;" onclick="modQty('${code}', 1)">+</button>
+                        <button class="btn btn-danger" style="padding:10px 15px;" onclick="delItem('${code}')">🗑️</button>
                     </div>`;
                 container.appendChild(card);
             });
@@ -276,8 +276,8 @@
                 videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
                 
-                // ALAPÉRTELMEZETT 2.0x ZOOM BEÁLLÍTÁSA
                 if (caps.zoom) {
+                    // FALLBACK MÓDOSÍTVA 1.6-RA
                     const savedZoom = localStorage.getItem("app_zoom") || 1.6;
                     applyZoom(savedZoom);
                     document.getElementById("zoom-slider").value = savedZoom;
@@ -288,8 +288,7 @@
 
         function applyZoom(v) {
             if (videoTrack) {
-                videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(v) }] })
-                .catch(e => console.log("Zoom nem támogatott"));
+                videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(v) }] });
                 document.getElementById("zoom-label").innerText = parseFloat(v).toFixed(1) + "x";
                 localStorage.setItem("app_zoom", v);
             }
@@ -320,9 +319,9 @@
             XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        function saveData() { localStorage.setItem("inventory_v5", JSON.stringify(inventoryData)); }
+        function saveData() { localStorage.setItem("inventory_v6", JSON.stringify(inventoryData)); }
         function loadData() {
-            const saved = localStorage.getItem("inventory_v5");
+            const saved = localStorage.getItem("inventory_v6");
             if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
         }
 
