@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Leltár App Pro</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         :root {
-            --primary: #0044cc; /* Kék */
-            --dark: #1a1a1a;    /* Fekete/Sötétszürke */
-            --danger: #cc0000;  /* Piros */
+            --primary: #0044cc;
+            /* Kék */
+            --dark: #1a1a1a;
+            /* Fekete/Sötétszürke */
+            --danger: #cc0000;
+            /* Piros */
             --grey: #888888;
             --light-grey: #f0f0f0;
             --bg: #ffffff;
         }
 
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 0; 
+            margin: 0;
+            padding: 0;
             background: #000;
             height: 100dvh;
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
@@ -38,6 +48,7 @@
             padding-top: env(safe-area-inset-top);
             height: calc(70px + env(safe-area-inset-top));
         }
+
         .tab-btn {
             flex: 1;
             padding: 10px 5px;
@@ -54,11 +65,16 @@
             gap: 6px;
             transition: 0.2s;
         }
+
         .tab-btn.active {
             color: var(--primary);
             font-weight: 700;
         }
-        .tab-btn i { width: 20px; height: 20px; }
+
+        .tab-btn i {
+            width: 20px;
+            height: 20px;
+        }
 
         /* Tartalom */
         .content-area {
@@ -68,22 +84,40 @@
             background: var(--bg);
             overflow-y: auto;
         }
-        .content-area.active { display: block; }
+
+        .content-area.active {
+            display: block;
+        }
 
         /* Szkenner */
-        #scanner { background: #000; overflow: hidden; }
-        #reader { width: 100% !important; height: 100% !important; border: none !important; }
-        #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-        
+        #scanner {
+            background: #000;
+            overflow: hidden;
+        }
+
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        #reader video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         /* Keret középre igazítva */
         .scan-overlay {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            width: 260px; height: 160px;
+            width: 260px;
+            height: 160px;
             border: 2px solid white;
             border-radius: 12px;
-            box-shadow: 0 0 0 5000px rgba(0,0,0,0.6);
+            box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.6);
             pointer-events: none;
             z-index: 5;
         }
@@ -99,15 +133,19 @@
         }
 
         .control-btn {
-            width: 56px; height: 56px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
         }
+
         .control-btn.active {
             background: var(--primary);
             border-color: var(--primary);
@@ -116,8 +154,11 @@
         /* Drawer */
         #backdrop {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
             display: none;
             z-index: 1500;
         }
@@ -125,57 +166,150 @@
         #drawer {
             position: fixed;
             bottom: -100%;
-            left: 0; right: 0;
+            left: 0;
+            right: 0;
             background: white;
             border-radius: 20px 20px 0 0;
             padding: 20px 25px calc(30px + env(safe-area-inset-bottom));
             transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 2000;
         }
-        #drawer.open { bottom: 0; }
-        #backdrop.active { display: block; }
-        .drawer-handle { width: 40px; height: 4px; background: var(--light-grey); border-radius: 2px; margin: 0 auto 20px; }
 
-        #drawer-code { font-size: 1.8rem; font-weight: 700; color: var(--dark); margin-bottom: 5px; word-break: break-all; }
-        #drawer-info { font-size: 1rem; color: var(--grey); margin-bottom: 25px; }
+        #drawer.open {
+            bottom: 0;
+        }
+
+        #backdrop.active {
+            display: block;
+        }
+
+        .drawer-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--light-grey);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+
+        #drawer-code {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        #drawer-info {
+            font-size: 1rem;
+            color: var(--grey);
+            margin-bottom: 25px;
+        }
 
         .qty-input-large {
-            width: 100%; max-width: 160px; height: 70px; font-size: 32px; text-align: center;
-            border: 1px solid var(--light-grey); border-radius: 12px; font-weight: 700; background: var(--light-grey);
-            margin-bottom: 15px; outline: none;
+            width: 100%;
+            max-width: 160px;
+            height: 70px;
+            font-size: 32px;
+            text-align: center;
+            border: 1px solid var(--light-grey);
+            border-radius: 12px;
+            font-weight: 700;
+            background: var(--light-grey);
+            margin-bottom: 15px;
+            outline: none;
         }
-        .qty-input-large:focus { border-color: var(--primary); background: white; }
+
+        .qty-input-large:focus {
+            border-color: var(--primary);
+            background: white;
+        }
 
         /* Listaelemek */
         .item-card {
-            background: white; padding: 16px; border-radius: 0; margin-bottom: 0;
-            display: flex; justify-content: space-between; align-items: center;
+            background: white;
+            padding: 16px;
+            border-radius: 0;
+            margin-bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid var(--light-grey);
         }
 
         /* Gombok */
-        .btn { 
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 12px 20px; border-radius: 8px; border: none; font-weight: 600; 
-            cursor: pointer; transition: 0.2s; font-size: 14px;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-dark { background: var(--dark); color: white; }
-        .btn-outline { background: white; color: var(--dark); border: 1px solid var(--light-grey); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-ok-large { width: 100%; height: 60px; font-size: 16px; background: var(--dark); color: white; border-radius: 12px; border: none; font-weight: 700; text-transform: uppercase; }
 
-        .qty-controls { display: flex; align-items: center; gap: 4px; }
-        .btn-qty { width: 36px; height: 36px; padding: 0; border-radius: 6px; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-        h3 { margin: 0 0 20px 0; font-weight: 800; font-size: 24px; }
+        .btn-dark {
+            background: var(--dark);
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--dark);
+            border: 1px solid var(--light-grey);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-ok-large {
+            width: 100%;
+            height: 60px;
+            font-size: 16px;
+            background: var(--dark);
+            color: white;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-qty {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 6px;
+        }
+
+        h3 {
+            margin: 0 0 20px 0;
+            font-weight: 800;
+            font-size: 24px;
+        }
     </style>
 </head>
+
 <body>
 
     <nav>
         <button class="tab-btn active" onclick="showTab('scanner', this)">
-            <i data-lucide="camera"></i>Szkenner
+            <i data-lucide="scan"></i>Szkenner
         </button>
         <button class="tab-btn" onclick="showTab('list', this)">
             <i data-lucide="list"></i>Lista
@@ -188,19 +322,20 @@
     <div id="scanner" class="content-area active">
         <div id="reader"></div>
         <div class="scan-overlay"></div>
-        
+
         <div class="camera-controls">
             <button id="restart-cam-btn" class="control-btn" onclick="restartCamera()">
                 <i data-lucide="refresh-cw"></i>
             </button>
             <button id="torch-btn" class="control-btn" onclick="toggleTorch()" style="display:none;">
-                <i data-lucide="zap"></i>
+                <i data-lucide="flashlight"></i>
             </button>
         </div>
     </div>
 
     <div id="list" class="content-area">
-        <div style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid var(--light-grey);">
+        <div
+            style="padding:15px; display:flex; gap:10px; background:white; position:sticky; top:0; z-index:10; border-bottom:1px solid var(--light-grey);">
             <button class="btn btn-dark" style="flex:1" onclick="exportToExcel()">
                 <i data-lucide="download" style="width:16px"></i> Mentés
             </button>
@@ -218,7 +353,8 @@
                 <label style="font-weight:600;">Kamera Zoom</label>
                 <b id="zoom-label">2.0x</b>
             </div>
-            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2.0" style="width:100%; accent-color:var(--dark);" oninput="applyZoom(this.value)">
+            <input type="range" id="zoom-slider" min="1" max="5" step="0.1" value="2.0"
+                style="width:100%; accent-color:var(--dark);" oninput="applyZoom(this.value)">
         </div>
     </div>
 
@@ -228,9 +364,12 @@
         <div style="text-align: center;">
             <div id="drawer-code">---</div>
             <div id="drawer-info">Készleten: 0 db</div>
-            <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
-            <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
-            <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
+            <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()"
+                onclick="this.select()">
+            <button class="btn-ok-large"
+                onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
+            <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;"
+                onclick="closeDrawer(false)">Mégse</button>
         </div>
     </div>
 
@@ -249,7 +388,7 @@
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
             closeDrawer(false);
-            if(tabId === 'list') updateUI();
+            if (tabId === 'list') updateUI();
         }
 
         function initCam() {
@@ -263,15 +402,21 @@
         function startCam() {
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 25, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
-            
+
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-            .then(() => setupExtras())
-            .catch(err => console.error("Kamera hiba:", err));
+                .then(() => setupExtras())
+                .catch(err => console.error("Kamera hiba:", err));
         }
 
         function restartCamera() {
             const btn = document.getElementById('restart-cam-btn');
+            // Forgatás animáció
             btn.style.transform = "rotate(180deg)";
+
+            // Vaku gomb azonnali alaphelyzetbe állítása (vizuálisan is)
+            const torchBtn = document.getElementById("torch-btn");
+            torchBtn.classList.remove('active');
+
             initCam();
             setTimeout(() => { btn.style.transform = "rotate(0deg)"; }, 500);
         }
@@ -281,10 +426,21 @@
             if (video && video.srcObject) {
                 videoTrack = video.srcObject.getVideoTracks()[0];
                 const caps = videoTrack.getCapabilities();
+
+                // Kényszerítjük a gombot, hogy kövesse a hardver állapotát (ami új indításnál OFF)
+                const torchBtn = document.getElementById("torch-btn");
+                torchBtn.classList.remove('active');
+
                 const savedZoom = localStorage.getItem("app_zoom") || 2.0;
                 applyZoom(savedZoom);
                 document.getElementById("zoom-slider").value = savedZoom;
-                if (caps.torch) document.getElementById("torch-btn").style.display = "flex";
+
+                // Csak akkor mutatjuk a gombot, ha a hardver támogatja
+                if (caps.torch) {
+                    torchBtn.style.display = "flex";
+                } else {
+                    torchBtn.style.display = "none";
+                }
             }
         }
 
@@ -293,9 +449,9 @@
                 const settings = videoTrack.getSettings();
                 const newState = !settings.torch;
                 videoTrack.applyConstraints({ advanced: [{ torch: newState }] })
-                .then(() => {
-                    document.getElementById('torch-btn').classList.toggle('active', newState);
-                });
+                    .then(() => {
+                        document.getElementById('torch-btn').classList.toggle('active', newState);
+                    });
             }
         }
 
@@ -366,9 +522,9 @@
             lucide.createIcons();
         }
 
-        function modQty(c, v) { inventoryData[c] += v; if(inventoryData[c] <= 0) delete inventoryData[c]; updateUI(); saveData(); }
-        function delItem(c) { if(confirm("Törli az elemet?")) { delete inventoryData[c]; updateUI(); saveData(); } }
-        function askClearAll() { if(confirm("Biztosan törli az összes adatot?")) { inventoryData = {}; updateUI(); saveData(); } }
+        function modQty(c, v) { inventoryData[c] += v; if (inventoryData[c] <= 0) delete inventoryData[c]; updateUI(); saveData(); }
+        function delItem(c) { if (confirm("Törli az elemet?")) { delete inventoryData[c]; updateUI(); saveData(); } }
+        function askClearAll() { if (confirm("Biztosan törli az összes adatot?")) { inventoryData = {}; updateUI(); saveData(); } }
 
         function applyZoom(v) {
             if (videoTrack) {
@@ -389,11 +545,11 @@
 
         function exportToExcel() {
             if (Object.keys(inventoryData).length === 0) return;
-            const data = Object.keys(inventoryData).map(k => ({"Vonalkód": k, "Mennyiség": inventoryData[k]}));
+            const data = Object.keys(inventoryData).map(k => ({ "Vonalkód": k, "Mennyiség": inventoryData[k] }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         function saveData() { localStorage.setItem("inventory_pro_v1", JSON.stringify(inventoryData)); }
@@ -402,11 +558,12 @@
             if (saved) { inventoryData = JSON.parse(saved); }
         }
 
-        window.onload = () => { 
+        window.onload = () => {
             lucide.createIcons();
-            loadData(); 
-            initCam(); 
+            loadData();
+            initCam();
         };
     </script>
 </body>
+
 </html>
