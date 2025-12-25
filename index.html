@@ -35,102 +35,76 @@
             height: calc(75px + env(safe-area-inset-top));
         }
         .tab-btn {
-            flex: 1;
-            padding: 10px 5px;
-            border: none;
-            background: none;
-            font-size: 12px;
-            color: #888;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
+            flex: 1; padding: 10px 5px; border: none; background: none;
+            font-size: 12px; color: #888; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; gap: 4px;
         }
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom: 4px solid var(--primary);
-            font-weight: bold;
-        }
+        .tab-btn.active { color: var(--primary); border-bottom: 4px solid var(--primary); font-weight: bold; }
         .tab-btn span { font-size: 24px; }
 
-        .content-area {
-            flex: 1;
-            position: relative;
-            display: none;
-            background: var(--bg);
-            overflow: hidden;
-        }
+        /* SZKENNER TERÜLET */
+        .content-area { flex: 1; position: relative; display: none; background: var(--bg); overflow: hidden; }
         .content-area.active { display: block; }
 
-        #scanner { background: #000; }
-        #reader { width: 100% !important; height: 100% !important; border: none !important; }
+        #scanner { background: #000; position: relative; }
+        
+        /* ÚJ: A reader magasságát 80%-ra vesszük, így a közepe pontosan 40%-nál lesz */
+        #reader { 
+            width: 100% !important; 
+            height: 80% !important; 
+            border: none !important;
+            position: absolute;
+            top: 0;
+        }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
         
-        /* SZKENNER KERET - FENTebb TOLVA (40% helyett 50% volt) */
+        /* Vizuális keret pontosan a reader közepén (ami a képernyő 40%-a) */
         .scan-overlay {
             position: absolute;
             top: 40%; left: 50%;
             transform: translate(-50%, -50%);
             width: 260px; height: 160px;
-            border: 2px solid rgba(255,255,255,0.8);
+            border: 3px solid rgba(255,255,255,0.9);
             border-radius: 15px;
             box-shadow: 0 0 0 5000px rgba(0,0,0,0.5);
             pointer-events: none;
             z-index: 5;
         }
 
-        /* KAMERA VEZÉRLŐK */
         .camera-controls {
             position: absolute;
-            bottom: 40px;
-            left: 50%;
+            bottom: 40px; left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            z-index: 100;
+            display: flex; gap: 20px; z-index: 100;
         }
 
         .control-btn {
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.6);
-            border: 2px solid #fff;
-            color: #fff; font-size: 24px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: rgba(0,0,0,0.7); border: 2px solid #fff;
+            color: #fff; font-size: 24px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
         }
 
         #torch-btn.active {
-            background: var(--success);
-            border-color: var(--success);
-            box-shadow: 0 0 15px var(--success);
+            background: var(--success); border-color: var(--success);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
         }
 
-        /* DRAWER & BACKDROP */
+        /* DRAWER STÍLUSOK */
         #backdrop {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            z-index: 1500;
-            backdrop-filter: blur(2px);
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); display: none; z-index: 1500;
+            backdrop-filter: blur(3px);
         }
-
         #drawer {
-            position: fixed;
-            bottom: -100%;
-            left: 0; right: 0;
-            background: white;
-            border-radius: 25px 25px 0 0;
+            position: fixed; bottom: -100%; left: 0; right: 0;
+            background: white; border-radius: 25px 25px 0 0;
             padding: 20px 25px calc(40px + env(safe-area-inset-bottom));
             box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            transition: bottom 0.3s cubic-bezier(0, 0, 0.2, 1);
-            z-index: 2000;
+            transition: bottom 0.3s cubic-bezier(0, 0, 0.2, 1); z-index: 2000;
         }
         #drawer.open { bottom: 0; }
         #backdrop.active { display: block; }
-        .drawer-handle { width: 50px; height: 5px; background: #eee; border-radius: 10px; margin: 0 auto 20px; }
 
         #drawer-code { font-size: 2.2rem; font-weight: 800; color: var(--dark); margin-bottom: 5px; word-break: break-all; }
         #drawer-info { font-size: 1.2rem; color: var(--primary); font-weight: 600; margin-bottom: 25px; }
@@ -145,14 +119,14 @@
             background: var(--primary); border-radius: 15px; color: white; border: none; font-weight: bold;
         }
 
+        /* LISTA */
         .inventory-list { padding: 10px 15px 100px 15px; }
         .item-card {
             background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid var(--primary);
         }
-
-        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.1s; }
+        .btn { padding: 12px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
         .btn-dark { background: var(--dark); }
         .btn-danger { background: var(--danger); }
     </style>
@@ -170,8 +144,8 @@
         <div class="scan-overlay"></div>
         
         <div class="camera-controls">
-            <button id="restart-cam-btn" class="control-btn" onclick="restartCamera()" title="Kamera Újraindítása">🔄</button>
-            <button id="torch-btn" class="control-btn" onclick="toggleTorch()" style="display:none;">🔦</button>
+            <button id="restart-cam-btn" class="control-btn" onclick="restartCamera()">🔄</button>
+            <button id="torch-btn" class="control-btn" onclick="toggleTorch()">🔦</button>
         </div>
     </div>
 
@@ -196,7 +170,7 @@
 
     <div id="backdrop" onclick="closeDrawer(false)"></div>
     <div id="drawer">
-        <div class="drawer-handle"></div>
+        <div style="width:50px; height:5px; background:#eee; border-radius:10px; margin: 0 auto 20px;"></div>
         <div style="text-align: center;">
             <div id="drawer-code">---</div>
             <div id="drawer-info">Aktuális készlet: 0 db</div>
@@ -204,7 +178,7 @@
                 <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
                 <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
             </div>
-            <button class="btn" style="color: #bbb; background:none; margin-top:20px; width:100%;" onclick="closeDrawer(false)">Mégse (Kilépés)</button>
+            <button class="btn" style="color: #bbb; background:none; margin-top:20px; width:100%;" onclick="closeDrawer(false)">Mégse (Vissza a kamerához)</button>
         </div>
     </div>
 
@@ -225,29 +199,37 @@
             closeDrawer(false);
         }
 
-        function initCam() {
+        async function initCam() {
             if (html5QrCode) {
-                html5QrCode.stop().then(() => startCam()).catch(() => startCam());
-            } else {
-                startCam();
+                try { await html5QrCode.stop(); } catch(e) {}
             }
+            startCam();
         }
 
         function startCam() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 20, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
+            // A qrbox-ot fixen tartjuk, a CSS-el mozgatjuk a nézetet
+            const config = { 
+                fps: 25, 
+                qrbox: { width: 260, height: 160 }, 
+                aspectRatio: 1.0 
+            };
             
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .then(() => setupExtras())
-            .catch(err => console.error("Kamera hiba:", err));
+            .catch(err => {
+                console.error("Kamera indítás sikertelen", err);
+                // Fallback ha az environment nem megy
+                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess).then(() => setupExtras());
+            });
         }
 
         function restartCamera() {
             const btn = document.getElementById('restart-cam-btn');
             btn.style.transform = "rotate(360deg)";
-            btn.style.transition = "0.5s";
+            btn.style.transition = "0.6s cubic-bezier(0.4, 0, 0.2, 1)";
             initCam();
-            setTimeout(() => { btn.style.transform = "rotate(0deg)"; btn.style.transition = "0s"; }, 500);
+            setTimeout(() => { btn.style.transform = "rotate(0deg)"; btn.style.transition = "0s"; }, 600);
         }
 
         function setupExtras() {
@@ -263,16 +245,17 @@
                 if (caps.torch) {
                     document.getElementById("torch-btn").style.display = "flex";
                     updateTorchUI();
+                } else {
+                    document.getElementById("torch-btn").style.display = "none";
                 }
             }
         }
 
         function toggleTorch() {
             if (videoTrack) {
-                const settings = videoTrack.getSettings();
-                const newState = !settings.torch;
-                videoTrack.applyConstraints({ advanced: [{ torch: newState }] })
-                .then(() => updateTorchUI());
+                const isOn = videoTrack.getSettings().torch;
+                videoTrack.applyConstraints({ advanced: [{ torch: !isOn }] })
+                .then(() => setTimeout(updateTorchUI, 100));
             }
         }
 
@@ -280,8 +263,7 @@
             const btn = document.getElementById('torch-btn');
             if (videoTrack) {
                 const isOn = videoTrack.getSettings().torch;
-                if (isOn) btn.classList.add('active');
-                else btn.classList.remove('active');
+                isOn ? btn.classList.add('active') : btn.classList.remove('active');
             }
         }
 
@@ -290,11 +272,14 @@
             isScanningPaused = true;
             lastScannedCode = code;
             playBeep();
+            
             document.getElementById('drawer-code').innerText = code;
             document.getElementById('drawer-info').innerText = "Aktuális készlet: " + (inventoryData[code] || 0) + " db";
             document.getElementById('drawer-qty').value = 1;
+            
             document.getElementById('drawer').classList.add('open');
             document.getElementById('backdrop').classList.add('active');
+            
             startAutoClose();
         }
 
@@ -383,7 +368,7 @@
             if (saved) { inventoryData = JSON.parse(saved); updateUI(); }
         }
 
-        window.onload = () => { loadData(); initCam(); };
+        window.onload = () => { loadData(); startCam(); };
     </script>
 </body>
 </html>
