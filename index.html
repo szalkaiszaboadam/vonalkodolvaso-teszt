@@ -771,7 +771,6 @@ function addFromDrawer() {
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-
 function exportToExcel() {
     // Ellenőrizzük, van-e adat
     if (Object.keys(inventoryData).length === 0) {
@@ -781,11 +780,11 @@ function exportToExcel() {
 
     // 1. Időbélyegek előkészítése
     const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10); 
-    const fullDateStr = now.toLocaleString('hu-HU');
+    const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD a fájlnévhez
+    const fullDateStr = now.toLocaleString('hu-HU'); // Szép magyar dátum a táblázatba
 
     // 2. Megjegyzés bekérése
-    let comment = prompt("Add meg a fájlhoz fűzött megjegyzést (pl. 'Raktár A'):", "");
+    let comment = prompt("Add meg a fájlhoz fűzött megjegyzést (pl. 'Raktár A' vagy 'Éves leltár'):", "");
     let displayComment = (comment && comment.trim() !== "") ? comment.trim() : "Nincs megjegyzés";
 
     // 3. Fájlnév összeállítása
@@ -796,42 +795,31 @@ function exportToExcel() {
     }
 
     // 4. Excel tartalom összeállítása
+    // Létrehozunk egy "üres" munkalapot a fejléc információkkal
     const headerInfo = [
         ["LELTÁR JELENTÉS"],
         ["Dátum:", fullDateStr],
         ["Megjegyzés:", displayComment],
-        [""] 
+        [""] // Üres sor az adatok előtt
     ];
 
+    // Létrehozzuk a munkalapot a fejléccel (aoa = Array of Arrays)
     const ws = XLSX.utils.aoa_to_sheet(headerInfo);
 
+    // 5. Az inventory adatok előkészítése és hozzáadása az 5. sortól (A5)
     const tableData = Object.keys(inventoryData).map(k => ({
         "Vonalkód": k,
         "Mennyiség (db)": inventoryData[k]
     }));
 
+    // Hozzáadjuk a JSON adatokat a már létező ws-hez, az A5 cellától kezdve
     XLSX.utils.sheet_add_json(ws, tableData, { origin: "A5" });
 
-    // 5. Mentés folyamata
+    // 6. Mentés
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-    
-    try {
-        XLSX.writeFile(wb, `${fileName}.xlsx`);
-        
-        // --- ADATTÖRLÉS A MENTÉS UTÁN ---
-        // Csak akkor törlünk, ha a mentési parancs lefutott
-        inventoryData = {}; // Adatok ürítése a memóriából
-        saveData();        // Üres állapot mentése a telefon tárhelyére
-        updateUI();        // Lista frissítése a képernyőn (üres lesz)
-        
-        alert("Sikeres mentés! A lista automatikusan törlődött.");
-    } catch (e) {
-        alert("Hiba történt a mentés során! Az adatok megmaradtak.");
-        console.error(e);
-    }
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
 }
-
 
 
 function renderQtyRibbon() {
