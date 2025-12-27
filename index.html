@@ -302,6 +302,24 @@
             font-weight: 800;
             font-size: 24px;
         }
+
+        @keyframes flash-yellow {
+    0% { background-color: white; }
+    50% { background-color: #fff3cd; } /* Világossárga */
+    100% { background-color: white; }
+}
+
+.duplicate-active {
+    animation: flash-yellow 1s ease-in-out;
+    border-top: 5px solid #ffc107 !important; /* Sárga felső csík */
+}
+
+.duplicate-text {
+    color: #856404 !important;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 5px;
+}
     </style>
 </head>
 
@@ -455,18 +473,34 @@
             }
         }
 
-        function onScanSuccess(code) {
-            if (isScanningPaused) return;
-            isScanningPaused = true;
-            lastScannedCode = code;
-            playBeep();
-            document.getElementById('drawer-code').innerText = code;
-            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
-            document.getElementById('drawer-qty').value = 1;
-            document.getElementById('drawer').classList.add('open');
-            document.getElementById('backdrop').classList.add('active');
-            startAutoClose();
-        }
+function onScanSuccess(code) {
+    if (isScanningPaused) return;
+    isScanningPaused = true;
+    lastScannedCode = code;
+    playBeep();
+
+    const isDuplicate = !!inventoryData[code]; // Ellenőrizzük, létezik-e már
+    const drawer = document.getElementById('drawer');
+    const drawerCode = document.getElementById('drawer-code');
+
+    // Reseteljük az előző állapotot
+    drawer.classList.remove('duplicate-active');
+    
+    if (isDuplicate) {
+        // Ha duplikáció van: vizuális jelzés
+        drawer.classList.add('duplicate-active');
+        drawerCode.innerHTML = `${code} <span class="duplicate-text">⚠️ MÁR SZEREPEL A LISTÁN</span>`;
+        navigator.vibrate?.([100, 50, 100]); // Kettős rezgés jelzés (ha a mobil támogatja)
+    } else {
+        drawerCode.innerText = code;
+    }
+
+    document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
+    document.getElementById('drawer-qty').value = 1;
+    drawer.classList.add('open');
+    document.getElementById('backdrop').classList.add('active');
+    startAutoClose();
+}
 
         function startAutoClose() {
             cancelAutoClose();
