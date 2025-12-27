@@ -303,154 +303,174 @@
             font-size: 24px;
         }
 
-/* Duplikáció villanás és stílus */
-@keyframes flash-yellow {
-    0% { background-color: white; }
-    50% { background-color: #fff3cd; }
-    100% { background-color: white; }
-}
+        /* Duplikáció villanás és stílus */
+        @keyframes flash-yellow {
+            0% {
+                background-color: white;
+            }
 
-.duplicate-active {
-    animation: flash-yellow 1s ease-in-out;
-    border-top: 5px solid #ffc107 !important;
-}
+            50% {
+                background-color: #fff3cd;
+            }
 
-.duplicate-text {
-    color: #856404 !important;
-    font-weight: bold;
-    font-size: 0.85rem;
-    display: block;
-    margin-top: 8px;
-    background: #fff3cd;
-    padding: 4px;
-    border-radius: 4px;
-}
+            100% {
+                background-color: white;
+            }
+        }
 
-.qty-selector-container {
-    width: 100%;
-    overflow-x: auto;
-    padding: 20px 0;
-    margin-bottom: 5px;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: flex-start;
-    /* Eltüntetjük a görgetősávot */
-    scrollbar-width: none; 
-    background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(240,240,240,0) 50%, rgba(255,255,255,1) 100%);
-}
-.qty-selector-container::-webkit-scrollbar { display: none; }
+        .duplicate-active {
+            animation: flash-yellow 1s ease-in-out;
+            border-top: 5px solid #ffc107 !important;
+        }
 
-.qty-ribbon {
-    display: flex;
-    gap: 12px;
-    padding: 0 40%; /* Hogy az első és utolsó elem is középre kerülhessen */
-}
+        .duplicate-text {
+            color: #856404 !important;
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: block;
+            margin-top: 8px;
+            background: #fff3cd;
+            padding: 4px;
+            border-radius: 4px;
+        }
 
-.qty-chip {
-    min-width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    background: white;
-    color: var(--dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: 0.2s;
-    border: 2px solid transparent;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+        .qty-selector-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 0;
+            margin-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: flex-start;
+            /* Eltüntetjük a görgetősávot */
+            scrollbar-width: none;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(240, 240, 240, 0) 50%, rgba(255, 255, 255, 1) 100%);
+        }
 
-.qty-chip.selected {
-    background: var(--primary);
-    color: white;
-    transform: scale(1.1);
-}
+        .qty-selector-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .qty-ribbon {
+            display: flex;
+            gap: 12px;
+            padding: 0 40%;
+            /* Hogy az első és utolsó elem is középre kerülhessen */
+        }
+
+        .qty-chip {
+            min-width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: white;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .qty-chip.selected {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
 
 
-.picker-container {
-    position: relative;
-    height: 150px;
-    width: 100%; /* Kitölti a szélességet, de a tartalom középen lesz */
-    margin: 10px auto;
-    overflow: hidden;
-    touch-action: pan-y; /* CSAK függőleges érintést engedélyez */
-    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
-}
+        .picker-container {
+            position: relative;
+            height: 150px;
+            width: 100%;
+            /* Kitölti a szélességet, de a tartalom középen lesz */
+            margin: 10px auto;
+            overflow: hidden;
+            touch-action: pan-y;
+            /* CSAK függőleges érintést engedélyez */
+            mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+        }
 
-.picker-wheel {
-    height: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden !important;/* Vízszintes görgetés tiltása */
-    scroll-snap-type: y mandatory;
-    scrollbar-width: none;
-    touch-action: pan-y !important;
-    padding: 50px 0;
-}
+        .picker-wheel {
+            height: 100%;
+            overflow-y: scroll;
+            overflow-x: hidden !important;
+            /* Vízszintes görgetés tiltása */
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            touch-action: pan-y !important;
+            padding: 50px 0;
+        }
 
-.picker-wheel::-webkit-scrollbar { display: none; }
+        .picker-wheel::-webkit-scrollbar {
+            display: none;
+        }
 
-.picker-item {
-    height: 50px;
-    width: 100%; /* Ne tudjon oldalra mozogni */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--grey);
-    scroll-snap-align: center;
-}
+        .picker-item {
+            height: 50px;
+            width: 100%;
+            /* Ne tudjon oldalra mozogni */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--grey);
+            scroll-snap-align: center;
+        }
 
-.picker-item.active {
-    color: var(--primary);
-    transform: scale(1.2);
-}
+        .picker-item.active {
+            color: var(--primary);
+            transform: scale(1.2);
+        }
 
-/* A kijelölő keret középen */
-.picker-selection-frame {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 50px;
-    transform: translateY(-50%);
-    border-top: 2px solid var(--light-grey);
-    border-bottom: 2px solid var(--light-grey);
-    pointer-events: none;
-}
+        /* A kijelölő keret középen */
+        .picker-selection-frame {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 50px;
+            transform: translateY(-50%);
+            border-top: 2px solid var(--light-grey);
+            border-bottom: 2px solid var(--light-grey);
+            pointer-events: none;
+        }
 
-.picker-item input {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    text-align: center;
-    font-size: 24px;
-    font-weight: 800;
-    font-family: inherit;
-    color: inherit;
-    outline: none;
-    pointer-events: none; /* Alapból nem kattintható */
-    opacity: 0.5; /* Kicsit elhalványítjuk, ha nincs középen */
-    transition: 0.3s;
-}
+        .picker-item input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            font-family: inherit;
+            color: inherit;
+            outline: none;
+            pointer-events: none;
+            /* Alapból nem kattintható */
+            opacity: 0.5;
+            /* Kicsit elhalványítjuk, ha nincs középen */
+            transition: 0.3s;
+        }
 
-/* Eltüntetjük a nyilakat a számmezőből */
-.picker-item input::-webkit-inner-spin-button,
-.picker-item input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+        /* Eltüntetjük a nyilakat a számmezőből */
+        .picker-item input::-webkit-inner-spin-button,
+        .picker-item input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-.picker-item.active input {
-    color: var(--primary);
-    pointer-events: auto;
-    opacity: 1;
-}
+        .picker-item.active input {
+            color: var(--primary);
+            pointer-events: auto;
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -508,32 +528,34 @@
     </div>
 
     <div id="backdrop" onclick="closeDrawer(false)"></div>
-<div id="drawer">
-    <div class="drawer-handle"></div>
-    <div style="text-align: center;">
-        <div id="drawer-code">---</div>
-        <div id="drawer-info">Készleten: 0 db</div>
-        
-        <div class="qty-selector-container">
-            <div class="qty-ribbon" id="qty-ribbon">
+    <div id="drawer">
+        <div class="drawer-handle"></div>
+        <div style="text-align: center;">
+            <div id="drawer-code">---</div>
+            <div id="drawer-info">Készleten: 0 db</div>
+
+            <div class="qty-selector-container">
+                <div class="qty-ribbon" id="qty-ribbon">
                 </div>
+            </div>
+
+
+
+            <div class="picker-container">
+                <div class="picker-selection-frame"></div>
+                <div class="picker-wheel" id="picker-wheel" onscroll="handlePickerScroll()">
+                </div>
+            </div>
+
+            <input type="number" id="drawer-qty" style="display:none;" value="1">
+
+
+            <button class="btn-ok-large"
+                onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
+            <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;"
+                onclick="closeDrawer(false)">Mégse</button>
         </div>
-
-
-
-<div class="picker-container">
-    <div class="picker-selection-frame"></div>
-    <div class="picker-wheel" id="picker-wheel" onscroll="handlePickerScroll()">
-        </div>
-</div>
-
-<input type="number" id="drawer-qty" style="display:none;" value="1">
-
-
-        <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
-        <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
     </div>
-</div>
 
     <script>
         let html5QrCode;
@@ -620,77 +642,77 @@
         }
 
         function onScanSuccess(code) {
-    if (isScanningPaused) return;
+            if (isScanningPaused) return;
 
-    //resetRibbon();
-    resetPicker();
+            //resetRibbon();
+            resetPicker();
 
-    isScanningPaused = true;
-    lastScannedCode = code;
-    
-    // Alap hangjelzés minden szkennelésnél
-    playBeep();
+            isScanningPaused = true;
+            lastScannedCode = code;
 
-    const isDuplicate = !!inventoryData[code];
-    const drawer = document.getElementById('drawer');
-    const drawerCode = document.getElementById('drawer-code');
+            // Alap hangjelzés minden szkennelésnél
+            playBeep();
 
-    // Előző állapot törlése
-    drawer.classList.remove('duplicate-active');
-    
-    if (isDuplicate) {
-        // DUPLIKÁCIÓ: Dupla rezgés + Sárga jelzés
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+            const isDuplicate = !!inventoryData[code];
+            const drawer = document.getElementById('drawer');
+            const drawerCode = document.getElementById('drawer-code');
+
+            // Előző állapot törlése
+            drawer.classList.remove('duplicate-active');
+
+            if (isDuplicate) {
+                // DUPLIKÁCIÓ: Dupla rezgés + Sárga jelzés
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+                drawer.classList.add('duplicate-active');
+                drawerCode.innerHTML = `${code} <span class="duplicate-text">⚠️ MÁR SZEREPEL A LISTÁN</span>`;
+            } else {
+                // ÚJ TÉTEL: Egy rövid rezgés
+                if (navigator.vibrate) navigator.vibrate(60);
+
+                drawerCode.innerText = code;
+            }
+
+            // Adatok betöltése a felugró ablakba
+            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-qty').value = 1;
+
+            // Ablak megjelenítése
+            drawer.classList.add('open');
+            document.getElementById('backdrop').classList.add('active');
+
+            // Automatikus hozzáadás indítása (3 mp múlva lezár)
+            startAutoClose();
+        }
+
+        /*function onScanSuccess(code) {
+            if (isScanningPaused) return;
+            isScanningPaused = true;
+            lastScannedCode = code;
+            playBeep();
         
-        drawer.classList.add('duplicate-active');
-        drawerCode.innerHTML = `${code} <span class="duplicate-text">⚠️ MÁR SZEREPEL A LISTÁN</span>`;
-    } else {
-        // ÚJ TÉTEL: Egy rövid rezgés
-        if (navigator.vibrate) navigator.vibrate(60); 
+            const isDuplicate = !!inventoryData[code]; // Ellenőrizzük, létezik-e már
+            const drawer = document.getElementById('drawer');
+            const drawerCode = document.getElementById('drawer-code');
         
-        drawerCode.innerText = code;
-    }
-
-    // Adatok betöltése a felugró ablakba
-    document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
-    document.getElementById('drawer-qty').value = 1;
-    
-    // Ablak megjelenítése
-    drawer.classList.add('open');
-    document.getElementById('backdrop').classList.add('active');
-    
-    // Automatikus hozzáadás indítása (3 mp múlva lezár)
-    startAutoClose();
-}
-
-/*function onScanSuccess(code) {
-    if (isScanningPaused) return;
-    isScanningPaused = true;
-    lastScannedCode = code;
-    playBeep();
-
-    const isDuplicate = !!inventoryData[code]; // Ellenőrizzük, létezik-e már
-    const drawer = document.getElementById('drawer');
-    const drawerCode = document.getElementById('drawer-code');
-
-    // Reseteljük az előző állapotot
-    drawer.classList.remove('duplicate-active');
-    
-    if (isDuplicate) {
-        // Ha duplikáció van: vizuális jelzés
-        drawer.classList.add('duplicate-active');
-        drawerCode.innerHTML = `${code} <span class="duplicate-text">⚠️ MÁR SZEREPEL A LISTÁN</span>`;
-        navigator.vibrate?.([100, 50, 100]); // Kettős rezgés jelzés (ha a mobil támogatja)
-    } else {
-        drawerCode.innerText = code;
-    }
-
-    document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
-    document.getElementById('drawer-qty').value = 1;
-    drawer.classList.add('open');
-    document.getElementById('backdrop').classList.add('active');
-    startAutoClose();
-}*/
+            // Reseteljük az előző állapotot
+            drawer.classList.remove('duplicate-active');
+            
+            if (isDuplicate) {
+                // Ha duplikáció van: vizuális jelzés
+                drawer.classList.add('duplicate-active');
+                drawerCode.innerHTML = `${code} <span class="duplicate-text">⚠️ MÁR SZEREPEL A LISTÁN</span>`;
+                navigator.vibrate?.([100, 50, 100]); // Kettős rezgés jelzés (ha a mobil támogatja)
+            } else {
+                drawerCode.innerText = code;
+            }
+        
+            document.getElementById('drawer-info').innerText = "Készleten: " + (inventoryData[code] || 0) + " db";
+            document.getElementById('drawer-qty').value = 1;
+            drawer.classList.add('open');
+            document.getElementById('backdrop').classList.add('active');
+            startAutoClose();
+        }*/
 
         function startAutoClose() {
             cancelAutoClose();
@@ -711,17 +733,17 @@
         }
 
         // Módosítani kell a hozzáadás gombot is, hogy az egyéni mezőt is figyelje
-function addFromDrawer() {
-    const finalQty = parseInt(document.getElementById('drawer-qty').value);
+        function addFromDrawer() {
+            const finalQty = parseInt(document.getElementById('drawer-qty').value);
 
-    if (!isNaN(finalQty) && finalQty > 0) {
-        inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + finalQty;
-        saveData();
-        closeDrawer(true);
-    } else {
-        alert("Kérlek adj meg egy érvényes számot!");
-    }
-}
+            if (!isNaN(finalQty) && finalQty > 0) {
+                inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + finalQty;
+                saveData();
+                closeDrawer(true);
+            } else {
+                alert("Kérlek adj meg egy érvényes számot!");
+            }
+        }
 
         function updateUI() {
             const container = document.getElementById('inventory-container');
@@ -773,11 +795,38 @@ function addFromDrawer() {
 
         function exportToExcel() {
             if (Object.keys(inventoryData).length === 0) return;
+
+            // 1. Megjegyzés bekérése a felhasználótól
+            const comment = prompt("Adj meg egy megjegyzést a mentéshez (opcionális):", "");
+            if (comment === null) return; // Ha a 'Mégse' gombra nyom, nem történik semmi
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+
+            // Fájlnév és munkalap név előkészítése (tiltott karakterek eltávolítása)
+            const safeComment = comment.replace(/[/\\?%*:|"<>]/g, '-').trim();
+            const fileName = `leltar_${dateStr}${safeComment ? '_' + safeComment : ''}.xlsx`;
+
+            // Az Excel tábla (munkalap) neve max 31 karakter lehet
+            const sheetName = safeComment ? safeComment.substring(0, 31) : "Leltár";
+
             const data = Object.keys(inventoryData).map(k => ({ "Vonalkód": k, "Mennyiség": inventoryData[k] }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            // 2. Munkalap hozzáadása az egyedi névvel
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+            // Mentés
+            XLSX.writeFile(wb, fileName);
+
+            // 3. Listaelemek törlése mentés után
+            setTimeout(() => {
+                if (confirm("A mentés elkészült. Töröljük a listát?")) {
+                    inventoryData = {};
+                    updateUI();
+                    saveData();
+                }
+            }, 500);
         }
 
         function saveData() { localStorage.setItem("inventory_pro_v1", JSON.stringify(inventoryData)); }
@@ -788,131 +837,131 @@ function addFromDrawer() {
 
 
 
-function renderQtyRibbon() {
-    const container = document.querySelector('.qty-selector-container');
-    const ribbon = document.getElementById('qty-ribbon');
-    
-    // Ha a felhasználó elkezd görgetni, azonnal állítsuk le az automata bezárást
-    container.onscroll = () => {
-        cancelAutoClose();
-    };
+        function renderQtyRibbon() {
+            const container = document.querySelector('.qty-selector-container');
+            const ribbon = document.getElementById('qty-ribbon');
 
-    // Ez megakadályozza, hogy a görgetés "beragadjon"
-    container.ontouchstart = () => {
-        cancelAutoClose();
-    };
+            // Ha a felhasználó elkezd görgetni, azonnal állítsuk le az automata bezárást
+            container.onscroll = () => {
+                cancelAutoClose();
+            };
 
-    ribbon.innerHTML = "";
-    quickValues.forEach(val => {
-        const chip = document.createElement('div');
-        chip.className = `qty-chip ${val === 1 ? 'selected' : ''}`;
-        chip.innerText = val;
-        chip.onclick = () => selectQty(val, chip);
-        ribbon.appendChild(chip);
-    });
-}
+            // Ez megakadályozza, hogy a görgetés "beragadjon"
+            container.ontouchstart = () => {
+                cancelAutoClose();
+            };
 
-function selectQty(val, element) {
-    document.getElementById('drawer-qty').value = val;
-    // Kijelölés vizuális frissítése
-    document.querySelectorAll('.qty-chip').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    // Görgetés az elemhez, hogy középen legyen
-    element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    
-    // Ha kézzel választanak, ne záródjon be az ablak automatikusan
-    cancelAutoClose();
-}
-
-function resetRibbon() {
-    const container = document.querySelector('.qty-selector-container');
-    document.getElementById('drawer-qty').value = 1;
-    
-    const chips = document.querySelectorAll('.qty-chip');
-    chips.forEach(c => {
-        c.classList.remove('selected');
-        if(c.innerText == "1") {
-            c.classList.add('selected');
+            ribbon.innerHTML = "";
+            quickValues.forEach(val => {
+                const chip = document.createElement('div');
+                chip.className = `qty-chip ${val === 1 ? 'selected' : ''}`;
+                chip.innerText = val;
+                chip.onclick = () => selectQty(val, chip);
+                ribbon.appendChild(chip);
+            });
         }
-    });
 
-    // Visszatekerjük az elejére simán
-    container.scrollTo({ left: 0, behavior: 'smooth' });
-}
+        function selectQty(val, element) {
+            document.getElementById('drawer-qty').value = val;
+            // Kijelölés vizuális frissítése
+            document.querySelectorAll('.qty-chip').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
 
+            // Görgetés az elemhez, hogy középen legyen
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
+            // Ha kézzel választanak, ne záródjon be az ablak automatikusan
+            cancelAutoClose();
+        }
 
+        function resetRibbon() {
+            const container = document.querySelector('.qty-selector-container');
+            document.getElementById('drawer-qty').value = 1;
 
-
-
-
-function renderQtyPicker() {
-    const wheel = document.getElementById('picker-wheel');
-    wheel.innerHTML = "";
-
-    // 1. Létrehozzuk az "Egyéni" beviteli mezőt legfelülre
-    const manualItem = document.createElement('div');
-    manualItem.className = 'picker-item';
-    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="Egyéni..." onfocus="cancelAutoClose()">`;
-    manualItem.setAttribute('data-val', 'manual');
-    wheel.appendChild(manualItem);
-
-    // 2. Létrehozzuk a fix számokat
-    quickValues.forEach(val => {
-        const item = document.createElement('div');
-        item.className = 'picker-item';
-        item.innerText = val;
-        item.setAttribute('data-val', val);
-        wheel.appendChild(item);
-    });
-}
-
-function handlePickerScroll() {
-    cancelAutoClose();
-    const wheel = document.getElementById('picker-wheel');
-    const items = wheel.querySelectorAll('.picker-item');
-    const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
-    const manualInput = document.getElementById('manual-qty');
-
-    items.forEach(item => {
-        const itemCenter = item.offsetTop + (item.clientHeight / 2);
-        const distance = Math.abs(wheelCenter - itemCenter);
-
-        if (distance < 25) {
-            // Ha már van aktív, és az nem a mostani, akkor levesszük
-            items.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            
-            const currentVal = item.getAttribute('data-val');
-            
-            if (currentVal === "manual") {
-                // Ha az egyéni mezőre értünk
-                document.getElementById('drawer-qty').value = manualInput.value;
-                manualInput.oninput = () => {
-                    document.getElementById('drawer-qty').value = manualInput.value;
-                };
-            } else {
-                // Ha elgörgetünk a manual-ról, vegyük le róla a fókuszt (billentyűzet elrejtése)
-                if (document.activeElement === manualInput) {
-                    manualInput.blur();
+            const chips = document.querySelectorAll('.qty-chip');
+            chips.forEach(c => {
+                c.classList.remove('selected');
+                if (c.innerText == "1") {
+                    c.classList.add('selected');
                 }
-                document.getElementById('drawer-qty').value = currentVal;
-            }
-        }
-    });
-}
+            });
 
-function resetPicker() {
-    const wheel = document.getElementById('picker-wheel');
-    const manualInput = document.getElementById('manual-qty');
-    
-    // Alaphelyzet: az 1-es számra görgetünk (ez a 2. elem, 50px-nél)
-    wheel.scrollTo({ top: 50, behavior: 'instant' }); 
-    if (manualInput) manualInput.value = ""; 
-    document.getElementById('drawer-qty').value = 1;
-    handlePickerScroll();
-}
+            // Visszatekerjük az elejére simán
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+
+
+
+
+
+
+
+        function renderQtyPicker() {
+            const wheel = document.getElementById('picker-wheel');
+            wheel.innerHTML = "";
+
+            // 1. Létrehozzuk az "Egyéni" beviteli mezőt legfelülre
+            const manualItem = document.createElement('div');
+            manualItem.className = 'picker-item';
+            manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="Egyéni..." onfocus="cancelAutoClose()">`;
+            manualItem.setAttribute('data-val', 'manual');
+            wheel.appendChild(manualItem);
+
+            // 2. Létrehozzuk a fix számokat
+            quickValues.forEach(val => {
+                const item = document.createElement('div');
+                item.className = 'picker-item';
+                item.innerText = val;
+                item.setAttribute('data-val', val);
+                wheel.appendChild(item);
+            });
+        }
+
+        function handlePickerScroll() {
+            cancelAutoClose();
+            const wheel = document.getElementById('picker-wheel');
+            const items = wheel.querySelectorAll('.picker-item');
+            const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
+            const manualInput = document.getElementById('manual-qty');
+
+            items.forEach(item => {
+                const itemCenter = item.offsetTop + (item.clientHeight / 2);
+                const distance = Math.abs(wheelCenter - itemCenter);
+
+                if (distance < 25) {
+                    // Ha már van aktív, és az nem a mostani, akkor levesszük
+                    items.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const currentVal = item.getAttribute('data-val');
+
+                    if (currentVal === "manual") {
+                        // Ha az egyéni mezőre értünk
+                        document.getElementById('drawer-qty').value = manualInput.value;
+                        manualInput.oninput = () => {
+                            document.getElementById('drawer-qty').value = manualInput.value;
+                        };
+                    } else {
+                        // Ha elgörgetünk a manual-ról, vegyük le róla a fókuszt (billentyűzet elrejtése)
+                        if (document.activeElement === manualInput) {
+                            manualInput.blur();
+                        }
+                        document.getElementById('drawer-qty').value = currentVal;
+                    }
+                }
+            });
+        }
+
+        function resetPicker() {
+            const wheel = document.getElementById('picker-wheel');
+            const manualInput = document.getElementById('manual-qty');
+
+            // Alaphelyzet: az 1-es számra görgetünk (ez a 2. elem, 50px-nél)
+            wheel.scrollTo({ top: 50, behavior: 'instant' });
+            if (manualInput) manualInput.value = "";
+            document.getElementById('drawer-qty').value = 1;
+            handlePickerScroll();
+        }
 
 
 
