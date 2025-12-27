@@ -854,7 +854,7 @@ function renderQtyPicker() {
     // 1. Létrehozzuk az "Egyéni" beviteli mezőt legfelülre
     const manualItem = document.createElement('div');
     manualItem.className = 'picker-item';
-    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="✏️" onfocus="cancelAutoClose()">`;
+    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="Egyéni..." onfocus="cancelAutoClose()">`;
     manualItem.setAttribute('data-val', 'manual');
     wheel.appendChild(manualItem);
 
