@@ -372,10 +372,11 @@
 
 .picker-container {
     position: relative;
-    height: 150px; /* 3 elem magassága */
-    width: 100px;
-    margin: 20px auto;
+    height: 150px;
+    width: 100%; /* Kitölti a szélességet, de a tartalom középen lesz */
+    margin: 10px auto;
     overflow: hidden;
+    touch-action: pan-y; /* CSAK függőleges érintést engedélyez */
     mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
 }
@@ -383,24 +384,24 @@
 .picker-wheel {
     height: 100%;
     overflow-y: scroll;
+    overflow-x: hidden; /* Vízszintes görgetés tiltása */
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding: 50px 0; /* Hogy az első és utolsó is középre kerülhessen */
+    padding: 50px 0;
 }
 
 .picker-wheel::-webkit-scrollbar { display: none; }
 
 .picker-item {
     height: 50px;
+    width: 100%; /* Ne tudjon oldalra mozogni */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--grey);
     scroll-snap-align: center;
-    transition: 0.2s;
 }
 
 .picker-item.active {
@@ -489,12 +490,20 @@
         </div>
 
 
+
         <div class="picker-container">
     <div class="picker-selection-frame"></div>
     <div class="picker-wheel" id="picker-wheel" onscroll="handlePickerScroll()">
         </div>
 </div>
+
+<div id="manual-input-container" style="display:none; margin-bottom: 15px;">
+    <input type="number" id="drawer-qty-manual" class="qty-input-large" 
+           placeholder="Írd be a számot..." onfocus="cancelAutoClose()">
+</div>
+
 <input type="number" id="drawer-qty" style="display:none;" value="1">
+
 
         <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
         <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
@@ -510,7 +519,7 @@
         let audioCtx;
         let autoCloseTimeout = null;
 
-        const quickValues = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 50, 100];
+        const quickValues = ["manual", 5, 10, 12, 20, 24, 50, 100];
 
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
@@ -676,14 +685,25 @@
             setTimeout(() => { isScanningPaused = false; }, 400);
         }
 
-        function addFromDrawer(val) {
-            const qty = parseInt(val);
-            if (!isNaN(qty) && qty > 0) {
-                inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + qty;
-                saveData();
-            }
-            closeDrawer(true);
-        }
+        // Módosítani kell a hozzáadás gombot is, hogy az egyéni mezőt is figyelje
+function addFromDrawer() {
+    let finalQty;
+    const isManual = document.querySelector('.picker-item.active').getAttribute('data-val') === "manual";
+    
+    if (isManual) {
+        finalQty = parseInt(document.getElementById('drawer-qty-manual').value);
+    } else {
+        finalQty = parseInt(document.getElementById('drawer-qty').value);
+    }
+
+    if (!isNaN(finalQty) && finalQty > 0) {
+        inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + finalQty;
+        saveData();
+        closeDrawer(true);
+    } else {
+        alert("Kérlek adj meg egy érvényes számot!");
+    }
+}
 
         function updateUI() {
             const container = document.getElementById('inventory-container');
@@ -815,37 +835,51 @@ function renderQtyPicker() {
     quickValues.forEach(val => {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        item.innerText = val;
+        // Ha "manual", akkor ikont mutatunk, különben a számot
+        item.innerText = (val === "manual") ? "✏️ Egyéni" : val;
         item.setAttribute('data-val', val);
         wheel.appendChild(item);
     });
 }
 
 function handlePickerScroll() {
-    cancelAutoClose(); // Ha pörgeted, ne záródjon be!
-    
+    cancelAutoClose();
     const wheel = document.getElementById('picker-wheel');
     const items = wheel.querySelectorAll('.picker-item');
+    const manualContainer = document.getElementById('manual-input-container');
     const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
 
     items.forEach(item => {
         const itemCenter = item.offsetTop + (item.clientHeight / 2);
         const distance = Math.abs(wheelCenter - itemCenter);
 
-        if (distance < 25) { // Ha az elem a középpont közelében van
+        if (distance < 25) {
             items.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            document.getElementById('drawer-qty').value = item.getAttribute('data-val');
+            
+            const currentVal = item.getAttribute('data-val');
+            
+            if (currentVal === "manual") {
+                // Ha az Egyéni van kiválasztva
+                manualContainer.style.display = "block";
+                document.getElementById('drawer-qty').value = document.getElementById('drawer-qty-manual').value;
+            } else {
+                // Ha fix szám van kiválasztva
+                manualContainer.style.display = "none";
+                document.getElementById('drawer-qty').value = currentVal;
+            }
         }
     });
 }
 
 function resetPicker() {
     const wheel = document.getElementById('picker-wheel');
-    // Visszatekerés az 1-esre (első elem)
-    wheel.scrollTo({ top: 0, behavior: 'instant' });
-    document.getElementById('drawer-qty').value = 1;
-    handlePickerScroll(); // Frissíti az aktív osztályt
+    const manualInput = document.getElementById('drawer-qty-manual');
+    
+    // Alaphelyzet: az 1-es számra görgetünk (ez a 2. elem, tehát 50px-nél van)
+    wheel.scrollTo({ top: 50, behavior: 'instant' }); 
+    manualInput.value = ""; // Töröljük az előző egyéni beírást
+    handlePickerScroll();
 }
 
         window.onload = () => {
