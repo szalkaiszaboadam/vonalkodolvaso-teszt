@@ -387,7 +387,7 @@
     overflow-x: hidden !important;/* Vízszintes görgetés tiltása */
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     padding: 50px 0;
 }
 
@@ -434,6 +434,9 @@
     font-family: inherit;
     color: inherit;
     outline: none;
+    pointer-events: none; /* Alapból nem kattintható */
+    opacity: 0.5; /* Kicsit elhalványítjuk, ha nincs középen */
+    transition: 0.3s;
 }
 
 /* Eltüntetjük a nyilakat a számmezőből */
@@ -445,6 +448,8 @@
 
 .picker-item.active input {
     color: var(--primary);
+    pointer-events: auto;
+    opacity: 1;
 }
     </style>
 </head>
@@ -868,27 +873,30 @@ function handlePickerScroll() {
     const wheel = document.getElementById('picker-wheel');
     const items = wheel.querySelectorAll('.picker-item');
     const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
+    const manualInput = document.getElementById('manual-qty');
 
     items.forEach(item => {
         const itemCenter = item.offsetTop + (item.clientHeight / 2);
         const distance = Math.abs(wheelCenter - itemCenter);
 
         if (distance < 25) {
+            // Ha már van aktív, és az nem a mostani, akkor levesszük
             items.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             
             const currentVal = item.getAttribute('data-val');
             
             if (currentVal === "manual") {
-                // Ha az egyéni inputon állunk, vegyük ki onnan az értéket
-                const manualInput = document.getElementById('manual-qty');
+                // Ha az egyéni mezőre értünk
                 document.getElementById('drawer-qty').value = manualInput.value;
-                
-                // Amikor beleírnak az inputba, frissítse a rejtett értéket
                 manualInput.oninput = () => {
                     document.getElementById('drawer-qty').value = manualInput.value;
                 };
             } else {
+                // Ha elgörgetünk a manual-ról, vegyük le róla a fókuszt (billentyűzet elrejtése)
+                if (document.activeElement === manualInput) {
+                    manualInput.blur();
+                }
                 document.getElementById('drawer-qty').value = currentVal;
             }
         }
