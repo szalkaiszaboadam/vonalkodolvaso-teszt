@@ -771,55 +771,21 @@ function addFromDrawer() {
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-function exportToExcel() {
-    // Ellenőrizzük, van-e adat
-    if (Object.keys(inventoryData).length === 0) {
-        alert("Nincs menthető adat a listában!");
-        return;
-    }
+        function exportToExcel() {
+            if (Object.keys(inventoryData).length === 0) return;
+            const data = Object.keys(inventoryData).map(k => ({ "Vonalkód": k, "Mennyiség": inventoryData[k] }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Leltár");
+            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
 
-    // 1. Időbélyegek előkészítése
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD a fájlnévhez
-    const fullDateStr = now.toLocaleString('hu-HU'); // Szép magyar dátum a táblázatba
+        function saveData() { localStorage.setItem("inventory_pro_v1", JSON.stringify(inventoryData)); }
+        function loadData() {
+            const saved = localStorage.getItem("inventory_pro_v1");
+            if (saved) { inventoryData = JSON.parse(saved); }
+        }
 
-    // 2. Megjegyzés bekérése
-    let comment = prompt("Add meg a fájlhoz fűzött megjegyzést (pl. 'Raktár A' vagy 'Éves leltár'):", "");
-    let displayComment = (comment && comment.trim() !== "") ? comment.trim() : "Nincs megjegyzés";
-
-    // 3. Fájlnév összeállítása
-    let fileName = `leltar_${dateStr}`;
-    if (comment && comment.trim() !== "") {
-        const safeComment = comment.trim().replace(/[^a-z0-9áéíóöőúüű\-_]/gi, '_');
-        fileName += `_${safeComment}`;
-    }
-
-    // 4. Excel tartalom összeállítása
-    // Létrehozunk egy "üres" munkalapot a fejléc információkkal
-    const headerInfo = [
-        ["LELTÁR JELENTÉS"],
-        ["Dátum:", fullDateStr],
-        ["Megjegyzés:", displayComment],
-        [""] // Üres sor az adatok előtt
-    ];
-
-    // Létrehozzuk a munkalapot a fejléccel (aoa = Array of Arrays)
-    const ws = XLSX.utils.aoa_to_sheet(headerInfo);
-
-    // 5. Az inventory adatok előkészítése és hozzáadása az 5. sortól (A5)
-    const tableData = Object.keys(inventoryData).map(k => ({
-        "Vonalkód": k,
-        "Mennyiség (db)": inventoryData[k]
-    }));
-
-    // Hozzáadjuk a JSON adatokat a már létező ws-hez, az A5 cellától kezdve
-    XLSX.utils.sheet_add_json(ws, tableData, { origin: "A5" });
-
-    // 6. Mentés
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-}
 
 
 function renderQtyRibbon() {
