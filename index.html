@@ -771,20 +771,66 @@ function addFromDrawer() {
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        function exportToExcel() {
-            if (Object.keys(inventoryData).length === 0) return;
-            const data = Object.keys(inventoryData).map(k => ({ "Vonalkód": k, "Mennyiség": inventoryData[k] }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Leltár");
-            XLSX.writeFile(wb, `leltar_${new Date().toISOString().slice(0, 10)}.xlsx`);
-        }
 
-        function saveData() { localStorage.setItem("inventory_pro_v1", JSON.stringify(inventoryData)); }
-        function loadData() {
-            const saved = localStorage.getItem("inventory_pro_v1");
-            if (saved) { inventoryData = JSON.parse(saved); }
-        }
+function exportToExcel() {
+    // Ellenőrizzük, van-e adat
+    if (Object.keys(inventoryData).length === 0) {
+        alert("Nincs menthető adat a listában!");
+        return;
+    }
+
+    // 1. Időbélyegek előkészítése
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10); 
+    const fullDateStr = now.toLocaleString('hu-HU');
+
+    // 2. Megjegyzés bekérése
+    let comment = prompt("Add meg a fájlhoz fűzött megjegyzést (pl. 'Raktár A'):", "");
+    let displayComment = (comment && comment.trim() !== "") ? comment.trim() : "Nincs megjegyzés";
+
+    // 3. Fájlnév összeállítása
+    let fileName = `leltar_${dateStr}`;
+    if (comment && comment.trim() !== "") {
+        const safeComment = comment.trim().replace(/[^a-z0-9áéíóöőúüű\-_]/gi, '_');
+        fileName += `_${safeComment}`;
+    }
+
+    // 4. Excel tartalom összeállítása
+    const headerInfo = [
+        ["LELTÁR JELENTÉS"],
+        ["Dátum:", fullDateStr],
+        ["Megjegyzés:", displayComment],
+        [""] 
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(headerInfo);
+
+    const tableData = Object.keys(inventoryData).map(k => ({
+        "Vonalkód": k,
+        "Mennyiség (db)": inventoryData[k]
+    }));
+
+    XLSX.utils.sheet_add_json(ws, tableData, { origin: "A5" });
+
+    // 5. Mentés folyamata
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leltár");
+    
+    try {
+        XLSX.writeFile(wb, `${fileName}.xlsx`);
+        
+        // --- ADATTÖRLÉS A MENTÉS UTÁN ---
+        // Csak akkor törlünk, ha a mentési parancs lefutott
+        inventoryData = {}; // Adatok ürítése a memóriából
+        saveData();        // Üres állapot mentése a telefon tárhelyére
+        updateUI();        // Lista frissítése a képernyőn (üres lesz)
+        
+        alert("Sikeres mentés! A lista automatikusan törlődött.");
+    } catch (e) {
+        alert("Hiba történt a mentés során! Az adatok megmaradtak.");
+        console.error(e);
+    }
+}
 
 
 
@@ -854,7 +900,7 @@ function renderQtyPicker() {
     // 1. Létrehozzuk az "Egyéni" beviteli mezőt legfelülre
     const manualItem = document.createElement('div');
     manualItem.className = 'picker-item';
-    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="✏️" onfocus="cancelAutoClose()">`;
+    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="Egyéni..." onfocus="cancelAutoClose()">`;
     manualItem.setAttribute('data-val', 'manual');
     wheel.appendChild(manualItem);
 
