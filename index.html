@@ -368,6 +368,58 @@
     color: white;
     transform: scale(1.1);
 }
+
+
+.picker-container {
+    position: relative;
+    height: 150px; /* 3 elem magassága */
+    width: 100px;
+    margin: 20px auto;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+}
+
+.picker-wheel {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 50px 0; /* Hogy az első és utolsó is középre kerülhessen */
+}
+
+.picker-wheel::-webkit-scrollbar { display: none; }
+
+.picker-item {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--grey);
+    scroll-snap-align: center;
+    transition: 0.2s;
+}
+
+.picker-item.active {
+    color: var(--primary);
+    transform: scale(1.2);
+}
+
+/* A kijelölő keret középen */
+.picker-selection-frame {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 50px;
+    transform: translateY(-50%);
+    border-top: 2px solid var(--light-grey);
+    border-bottom: 2px solid var(--light-grey);
+    pointer-events: none;
+}
     </style>
 </head>
 
@@ -436,8 +488,14 @@
                 </div>
         </div>
 
-        <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
-        
+
+        <div class="picker-container">
+    <div class="picker-selection-frame"></div>
+    <div class="picker-wheel" id="picker-wheel" onscroll="handlePickerScroll()">
+        </div>
+</div>
+<input type="number" id="drawer-qty" style="display:none;" value="1">
+
         <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
         <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
     </div>
@@ -452,7 +510,7 @@
         let audioCtx;
         let autoCloseTimeout = null;
 
-        const quickValues = [1, 2, 3, 4, 5, 10, 12, 20, 24, 50, 100];
+        const quickValues = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 50, 100];
 
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
@@ -530,7 +588,8 @@
         function onScanSuccess(code) {
     if (isScanningPaused) return;
 
-    resetRibbon();
+    //resetRibbon();
+    resetPicker();
 
     isScanningPaused = true;
     lastScannedCode = code;
@@ -744,11 +803,57 @@ function resetRibbon() {
     container.scrollTo({ left: 0, behavior: 'smooth' });
 }
 
+
+
+
+
+
+
+function renderQtyPicker() {
+    const wheel = document.getElementById('picker-wheel');
+    wheel.innerHTML = "";
+    quickValues.forEach(val => {
+        const item = document.createElement('div');
+        item.className = 'picker-item';
+        item.innerText = val;
+        item.setAttribute('data-val', val);
+        wheel.appendChild(item);
+    });
+}
+
+function handlePickerScroll() {
+    cancelAutoClose(); // Ha pörgeted, ne záródjon be!
+    
+    const wheel = document.getElementById('picker-wheel');
+    const items = wheel.querySelectorAll('.picker-item');
+    const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
+
+    items.forEach(item => {
+        const itemCenter = item.offsetTop + (item.clientHeight / 2);
+        const distance = Math.abs(wheelCenter - itemCenter);
+
+        if (distance < 25) { // Ha az elem a középpont közelében van
+            items.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            document.getElementById('drawer-qty').value = item.getAttribute('data-val');
+        }
+    });
+}
+
+function resetPicker() {
+    const wheel = document.getElementById('picker-wheel');
+    // Visszatekerés az 1-esre (első elem)
+    wheel.scrollTo({ top: 0, behavior: 'instant' });
+    document.getElementById('drawer-qty').value = 1;
+    handlePickerScroll(); // Frissíti az aktív osztályt
+}
+
         window.onload = () => {
             lucide.createIcons();
             loadData();
             initCam();
-            renderQtyRibbon();
+            //renderQtyRibbon();
+            renderQtyPicker();
         };
     </script>
 </body>
