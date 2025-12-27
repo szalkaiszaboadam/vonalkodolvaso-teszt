@@ -329,13 +329,14 @@
 .qty-selector-container {
     width: 100%;
     overflow-x: auto;
-    padding: 15px 0;
-    margin-bottom: 10px;
+    padding: 20px 0;
+    margin-bottom: 5px;
     -webkit-overflow-scrolling: touch;
     display: flex;
     justify-content: flex-start;
     /* Eltüntetjük a görgetősávot */
     scrollbar-width: none; 
+    background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(240,240,240,0) 50%, rgba(255,255,255,1) 100%);
 }
 .qty-selector-container::-webkit-scrollbar { display: none; }
 
@@ -346,10 +347,10 @@
 }
 
 .qty-chip {
-    min-width: 50px;
-    height: 50px;
-    border-radius: 25px;
-    background: var(--light-grey);
+    min-width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: white;
     color: var(--dark);
     display: flex;
     align-items: center;
@@ -359,6 +360,7 @@
     cursor: pointer;
     transition: 0.2s;
     border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .qty-chip.selected {
@@ -690,7 +692,19 @@
 
 
 function renderQtyRibbon() {
+    const container = document.querySelector('.qty-selector-container');
     const ribbon = document.getElementById('qty-ribbon');
+    
+    // Ha a felhasználó elkezd görgetni, azonnal állítsuk le az automata bezárást
+    container.onscroll = () => {
+        cancelAutoClose();
+    };
+
+    // Ez megakadályozza, hogy a görgetés "beragadjon"
+    container.ontouchstart = () => {
+        cancelAutoClose();
+    };
+
     ribbon.innerHTML = "";
     quickValues.forEach(val => {
         const chip = document.createElement('div');
@@ -714,18 +728,20 @@ function selectQty(val, element) {
     cancelAutoClose();
 }
 
-// Az onScanSuccess-ben is alaphelyzetbe kell állítani a kijelölést
-// (Ezt írd be az onScanSuccess elejére)
 function resetRibbon() {
+    const container = document.querySelector('.qty-selector-container');
     document.getElementById('drawer-qty').value = 1;
+    
     const chips = document.querySelectorAll('.qty-chip');
     chips.forEach(c => {
         c.classList.remove('selected');
         if(c.innerText == "1") {
             c.classList.add('selected');
-            c.scrollIntoView({ inline: 'center' });
         }
     });
+
+    // Visszatekerjük az elejére simán
+    container.scrollTo({ left: 0, behavior: 'smooth' });
 }
 
         window.onload = () => {
