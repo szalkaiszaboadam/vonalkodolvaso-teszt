@@ -384,9 +384,10 @@
 .picker-wheel {
     height: 100%;
     overflow-y: scroll;
-    overflow-x: hidden; /* Vízszintes görgetés tiltása */
+    overflow-x: hidden !important;/* Vízszintes görgetés tiltása */
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
+    touch-action: pan-y;
     padding: 50px 0;
 }
 
@@ -420,6 +421,30 @@
     border-top: 2px solid var(--light-grey);
     border-bottom: 2px solid var(--light-grey);
     pointer-events: none;
+}
+
+.picker-item input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    font-family: inherit;
+    color: inherit;
+    outline: none;
+}
+
+/* Eltüntetjük a nyilakat a számmezőből */
+.picker-item input::-webkit-inner-spin-button,
+.picker-item input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.picker-item.active input {
+    color: var(--primary);
 }
     </style>
 </head>
@@ -491,15 +516,10 @@
 
 
 
-        <div class="picker-container">
+<div class="picker-container">
     <div class="picker-selection-frame"></div>
     <div class="picker-wheel" id="picker-wheel" onscroll="handlePickerScroll()">
         </div>
-</div>
-
-<div id="manual-input-container" style="display:none; margin-bottom: 15px;">
-    <input type="number" id="drawer-qty-manual" class="qty-input-large" 
-           placeholder="Írd be a számot..." onfocus="cancelAutoClose()">
 </div>
 
 <input type="number" id="drawer-qty" style="display:none;" value="1">
@@ -519,7 +539,7 @@
         let audioCtx;
         let autoCloseTimeout = null;
 
-        const quickValues = ["manual", 5, 10, 12, 20, 24, 50, 100];
+        const quickValues = ["manual", 1, 2, 3, 4, 5, 10, 12, 20, 24, 50, 100];
 
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
@@ -687,14 +707,7 @@
 
         // Módosítani kell a hozzáadás gombot is, hogy az egyéni mezőt is figyelje
 function addFromDrawer() {
-    let finalQty;
-    const isManual = document.querySelector('.picker-item.active').getAttribute('data-val') === "manual";
-    
-    if (isManual) {
-        finalQty = parseInt(document.getElementById('drawer-qty-manual').value);
-    } else {
-        finalQty = parseInt(document.getElementById('drawer-qty').value);
-    }
+    const finalQty = parseInt(document.getElementById('drawer-qty').value);
 
     if (!isNaN(finalQty) && finalQty > 0) {
         inventoryData[lastScannedCode] = (inventoryData[lastScannedCode] || 0) + finalQty;
@@ -832,11 +845,19 @@ function resetRibbon() {
 function renderQtyPicker() {
     const wheel = document.getElementById('picker-wheel');
     wheel.innerHTML = "";
+
+    // 1. Létrehozzuk az "Egyéni" beviteli mezőt legfelülre
+    const manualItem = document.createElement('div');
+    manualItem.className = 'picker-item';
+    manualItem.innerHTML = `<input type="number" id="manual-qty" placeholder="✏️" onfocus="cancelAutoClose()">`;
+    manualItem.setAttribute('data-val', 'manual');
+    wheel.appendChild(manualItem);
+
+    // 2. Létrehozzuk a fix számokat
     quickValues.forEach(val => {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        // Ha "manual", akkor ikont mutatunk, különben a számot
-        item.innerText = (val === "manual") ? "✏️ Egyéni" : val;
+        item.innerText = val;
         item.setAttribute('data-val', val);
         wheel.appendChild(item);
     });
@@ -846,7 +867,6 @@ function handlePickerScroll() {
     cancelAutoClose();
     const wheel = document.getElementById('picker-wheel');
     const items = wheel.querySelectorAll('.picker-item');
-    const manualContainer = document.getElementById('manual-input-container');
     const wheelCenter = wheel.scrollTop + (wheel.clientHeight / 2);
 
     items.forEach(item => {
@@ -860,12 +880,15 @@ function handlePickerScroll() {
             const currentVal = item.getAttribute('data-val');
             
             if (currentVal === "manual") {
-                // Ha az Egyéni van kiválasztva
-                manualContainer.style.display = "block";
-                document.getElementById('drawer-qty').value = document.getElementById('drawer-qty-manual').value;
+                // Ha az egyéni inputon állunk, vegyük ki onnan az értéket
+                const manualInput = document.getElementById('manual-qty');
+                document.getElementById('drawer-qty').value = manualInput.value;
+                
+                // Amikor beleírnak az inputba, frissítse a rejtett értéket
+                manualInput.oninput = () => {
+                    document.getElementById('drawer-qty').value = manualInput.value;
+                };
             } else {
-                // Ha fix szám van kiválasztva
-                manualContainer.style.display = "none";
                 document.getElementById('drawer-qty').value = currentVal;
             }
         }
@@ -874,13 +897,16 @@ function handlePickerScroll() {
 
 function resetPicker() {
     const wheel = document.getElementById('picker-wheel');
-    const manualInput = document.getElementById('drawer-qty-manual');
+    const manualInput = document.getElementById('manual-qty');
     
-    // Alaphelyzet: az 1-es számra görgetünk (ez a 2. elem, tehát 50px-nél van)
+    // Alaphelyzet: az 1-es számra görgetünk (ez a 2. elem, 50px-nél)
     wheel.scrollTo({ top: 50, behavior: 'instant' }); 
-    manualInput.value = ""; // Töröljük az előző egyéni beírást
+    if (manualInput) manualInput.value = ""; 
+    document.getElementById('drawer-qty').value = 1;
     handlePickerScroll();
 }
+
+
 
         window.onload = () => {
             lucide.createIcons();
