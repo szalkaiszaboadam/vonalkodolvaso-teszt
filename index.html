@@ -325,6 +325,47 @@
     padding: 4px;
     border-radius: 4px;
 }
+
+.qty-selector-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 15px 0;
+    margin-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: flex-start;
+    /* Eltüntetjük a görgetősávot */
+    scrollbar-width: none; 
+}
+.qty-selector-container::-webkit-scrollbar { display: none; }
+
+.qty-ribbon {
+    display: flex;
+    gap: 12px;
+    padding: 0 40%; /* Hogy az első és utolsó elem is középre kerülhessen */
+}
+
+.qty-chip {
+    min-width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    background: var(--light-grey);
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 2px solid transparent;
+}
+
+.qty-chip.selected {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
     </style>
 </head>
 
@@ -382,19 +423,23 @@
     </div>
 
     <div id="backdrop" onclick="closeDrawer(false)"></div>
-    <div id="drawer">
-        <div class="drawer-handle"></div>
-        <div style="text-align: center;">
-            <div id="drawer-code">---</div>
-            <div id="drawer-info">Készleten: 0 db</div>
-            <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()"
-                onclick="this.select()">
-            <button class="btn-ok-large"
-                onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
-            <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;"
-                onclick="closeDrawer(false)">Mégse</button>
+<div id="drawer">
+    <div class="drawer-handle"></div>
+    <div style="text-align: center;">
+        <div id="drawer-code">---</div>
+        <div id="drawer-info">Készleten: 0 db</div>
+        
+        <div class="qty-selector-container">
+            <div class="qty-ribbon" id="qty-ribbon">
+                </div>
         </div>
+
+        <input type="number" id="drawer-qty" class="qty-input-large" value="1" onfocus="cancelAutoClose()" onclick="this.select()">
+        
+        <button class="btn-ok-large" onclick="addFromDrawer(document.getElementById('drawer-qty').value)">Hozzáadás</button>
+        <button class="btn" style="color: var(--grey); background:none; margin-top:15px; width:100%;" onclick="closeDrawer(false)">Mégse</button>
     </div>
+</div>
 
     <script>
         let html5QrCode;
@@ -404,6 +449,8 @@
         let lastScannedCode = "";
         let audioCtx;
         let autoCloseTimeout = null;
+
+        const quickValues = [1, 2, 3, 4, 5, 10, 12, 20, 24, 50, 100];
 
         function showTab(tabId, btn) {
             document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
@@ -480,6 +527,9 @@
 
         function onScanSuccess(code) {
     if (isScanningPaused) return;
+
+    resetRibbon();
+
     isScanningPaused = true;
     lastScannedCode = code;
     
@@ -637,10 +687,52 @@
             if (saved) { inventoryData = JSON.parse(saved); }
         }
 
+
+
+function renderQtyRibbon() {
+    const ribbon = document.getElementById('qty-ribbon');
+    ribbon.innerHTML = "";
+    quickValues.forEach(val => {
+        const chip = document.createElement('div');
+        chip.className = `qty-chip ${val === 1 ? 'selected' : ''}`;
+        chip.innerText = val;
+        chip.onclick = () => selectQty(val, chip);
+        ribbon.appendChild(chip);
+    });
+}
+
+function selectQty(val, element) {
+    document.getElementById('drawer-qty').value = val;
+    // Kijelölés vizuális frissítése
+    document.querySelectorAll('.qty-chip').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    // Görgetés az elemhez, hogy középen legyen
+    element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    
+    // Ha kézzel választanak, ne záródjon be az ablak automatikusan
+    cancelAutoClose();
+}
+
+// Az onScanSuccess-ben is alaphelyzetbe kell állítani a kijelölést
+// (Ezt írd be az onScanSuccess elejére)
+function resetRibbon() {
+    document.getElementById('drawer-qty').value = 1;
+    const chips = document.querySelectorAll('.qty-chip');
+    chips.forEach(c => {
+        c.classList.remove('selected');
+        if(c.innerText == "1") {
+            c.classList.add('selected');
+            c.scrollIntoView({ inline: 'center' });
+        }
+    });
+}
+
         window.onload = () => {
             lucide.createIcons();
             loadData();
             initCam();
+            renderQtyRibbon();
         };
     </script>
 </body>
